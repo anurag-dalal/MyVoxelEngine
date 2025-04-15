@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+// Declare camera position as extern
+extern glm::vec3 cameraPos;
+
 struct Voxel {
     glm::vec3 position;
     unsigned int blockId; // Index in the texture atlas
