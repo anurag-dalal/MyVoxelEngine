@@ -47,13 +47,17 @@ include_directories(
     Include
     Shaders/vertex.glsl
     Shaders/fragment.glsl
+    Shaders/voxel_fragment.glsl
+    Shaders/voxel_fragment.glsl
 )
 
 # Source files
 add_executable(${PROJECT_NAME} 
-                Source/Application.cpp
-                Source/Utils/GpuUsage.cpp)
-target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders")
+                Source/Application2.cpp
+                Source/Utils/GpuUsage.cpp
+                Source/World/Voxel.h
+                Source/World/Voxel.cpp)
+target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets")
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     glad
