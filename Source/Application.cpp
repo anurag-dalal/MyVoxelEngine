@@ -8,6 +8,12 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
+#include "Utils/GpuUsage.cpp"
 
 // Window size
 const unsigned int SCR_WIDTH = 2560;
@@ -159,7 +165,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Green Voxel", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "MyVoxelEngine", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window\n";
@@ -167,6 +173,13 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -207,12 +220,18 @@ int main()
     glEnableVertexAttribArray(0);
 
     glEnable(GL_DEPTH_TEST);
+    const int NUM_SAMPLES = 100;
+    std::vector<float> frameTimes(NUM_SAMPLES, 0.0f);
+    int frameIndex = 0;
+    GpuUsage gpu;
 
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        frameTimes[frameIndex] = deltaTime * 1000.0f; // store in milliseconds
+        frameIndex = (frameIndex + 1) % NUM_SAMPLES;
 
         processInput(window);
 
@@ -237,9 +256,28 @@ int main()
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::GetIO().FontGlobalScale = 2.5f;
+        ImGui::NewFrame();
+
+        
+        float fps = 1.0f / deltaTime;
+        ImGui::SetNextWindowSize(ImVec2(600, 300), ImGuiCond_Always);
+        ImGui::Begin("Performance");
+        ImGui::Text("FPS: %.1f", fps);
+        ImGui::Text("Frame Time: %.2f ms", deltaTime * 1000.0f);
+        ImGui::PlotLines("Frame Time (ms)", frameTimes.data(), NUM_SAMPLES, frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
+        ImGui::Text("GPU Usage: %.1f%%", gpu.get_usage());
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
