@@ -14,27 +14,35 @@
 #include "backends/imgui_impl_opengl3.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
+#define STB_PERLIN_IMPLEMENTATION
+#include "stb_perlin.h"
 #include "Utils/GpuUsage.cpp"
 #include "World/Voxel.h" // Include the Voxel header
+#include "Utils/ConfigReader.h"// Include the ConfigReader header
+#include "Utils/HeightMapGenerator.h"
+
+Config config = loadConfig(CONFIG_FILE);
 
 // Window size
-const unsigned int SCR_WIDTH = 2560;
-const unsigned int SCR_HEIGHT = 1600;
+const unsigned int SCR_WIDTH = config.window.width;
+const unsigned int SCR_HEIGHT = config.window.height;
 
 // Texture atlas dimensions (defined here as well for convenience)
-const int ATLAS_WIDTH = 256;
-const int ATLAS_HEIGHT = 256;
-const int BLOCKS_PER_ROW = 16;
-const int BLOCKS_PER_COL = 16;
+const int ATLAS_WIDTH = config.textureAtlas.width;
+const int ATLAS_HEIGHT = config.textureAtlas.height;
+const int BLOCKS_PER_ROW = config.textureAtlas.blocksPerRow;
+const int BLOCKS_PER_COL = config.textureAtlas.blocksPerCol;
+
+// Voxel scale
+const float VOXEL_SCALE = config.voxelScale;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraPos = config.camera.position;
+glm::vec3 cameraFront = config.camera.front;
+glm::vec3 cameraUp = config.camera.up;
+float yaw = config.camera.yaw;
+float pitch = config.camera.pitch;
 
-float yaw = -90.0f;
-float pitch = 0.0f;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -104,7 +112,9 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "MyVoxelEngine", NULL, NULL);
+    // Set up window
+    GLFWwindow *window = glfwCreateWindow(config.window.width, config.window.height, config.window.title.c_str(), NULL, NULL);
+
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window\n";
@@ -165,23 +175,64 @@ int main()
 
     // Create a large number of voxels
     std::vector<Voxel> voxelsToRender;
-    int n = 32; // Example: 32x32x32 grid of voxels
-    for (int x = 0; x < n; ++x) {
-        for (int y = 0; y < n; ++y) {
-            for (int z = 0; z < n; ++z) {
-                //if (rand() % 100 > 10) // 10% chance
-                  //  continue;
-                voxelsToRender.emplace_back(glm::vec3(x, y, z), (x + y * n + z * n * n) % 256); // Example block ID
+    int n = 64; // Example: 32x32x32 grid of voxels
+    // for (int x = 0; x < n; ++x) {
+    //     for (int y = 0; y < n; ++y) {
+    //         for (int z = 0; z < n; ++z) {
+    //             //if (rand() % 100 > 10) // 10% chance
+    //               //  continue;
+    //             voxelsToRender.emplace_back(glm::vec3(x*config.voxelScale, y*config.voxelScale, z*config.voxelScale), (x + y * n + z * n * n) % 256); // Example block ID
+    //         }
+    //     }
+    // }
+
+    // HeightMapGenerator generator(n, n, 0.0f, static_cast<float>(n - 1));
+    // auto heightmap = generator.generateRandom();
+
+    // for (int x = 0; x < n; ++x) {
+    //     for (int z = 0; z < n; ++z) {
+    //         int height = static_cast<int>(heightmap[z][x]); // z is row, x is column
+
+    //         for (int y = 0; y <= height; ++y) {
+    //             glm::vec3 position(x * config.voxelScale, y * config.voxelScale, z * config.voxelScale);
+    //             int blockId = y == height ? 1 : 2; // Example: top block is grass, below is dirt
+    //             voxelsToRender.emplace_back(position, blockId);
+    //         }
+    //     }
+    // }
+    // Grid size
+    const int vox_width = 128;
+    const int vox_depth = 128;
+    const int vox_maxHeight = 64;
+    float voxelScale = config.voxelScale; // From your config
+
+    // Noise scaling factors
+    float frequency = 0.005f; // Controls terrain frequency
+    float amplitude = static_cast<float>(vox_maxHeight); // Controls max height
+
+    for (int x = 0; x < vox_width; ++x) {
+        for (int z = 0; z < vox_depth; ++z) {
+            // Generate a height value using Perlin noise (normalized to [0, 1])
+            float noiseValue = stb_perlin_noise3(x * frequency, 0.0f, z * frequency, 0, 0, 0);
+            noiseValue = (noiseValue + 1.0f) / 2.0f; // Remap from [-1,1] to [0,1]
+            int height = static_cast<int>(noiseValue * amplitude);
+
+            // Fill voxels up to the height
+            for (int y = 0; y <= height; ++y) {
+                glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
+
+                // You can get fancier with block types here
+                int blockId = (y == height) ? 1 : 2; // Top is grass, below is dirt
+                voxelsToRender.emplace_back(position, blockId);
             }
         }
     }
-
     glEnable(GL_DEPTH_TEST);
-    const int NUM_SAMPLES = 100;
+    const int NUM_SAMPLES = config.performance.numSamples;;
     std::vector<float> frameTimes(NUM_SAMPLES, 0.0f);
     int frameIndex = 0;
     GpuUsage gpu;
-
+    glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
@@ -197,7 +248,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
+        
 
         // Render the voxels using the VoxelRenderer
         voxelRenderer.render(voxelsToRender, view, projection);
@@ -213,7 +264,7 @@ int main()
         ImGui::Text("FPS: %.1f", fps);
         ImGui::Text("Frame Time: %.2f ms", deltaTime * 1000.0f);
         ImGui::PlotLines("Frame Time (ms)", frameTimes.data(), NUM_SAMPLES, frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
-        ImGui::Text("GPU Usage: %.1f%%", gpu.get_usage());
+        ImGui::Text("GPU Usage: %.1d MB", gpu.get_usage());
         ImGui::End();
 
         ImGui::Render();

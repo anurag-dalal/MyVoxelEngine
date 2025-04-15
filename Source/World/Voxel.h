@@ -26,7 +26,6 @@ private:
     unsigned int instanceVBO;
     unsigned int VAO;
     unsigned int textureAtlasId;
-
     // Shader loading utility
     unsigned int createShader(const char* vertexPath, const char* fragmentPath);
 };

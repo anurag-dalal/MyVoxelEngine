@@ -7,8 +7,9 @@
 glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
 }
+
 // Updated cube vertices with UVs from the atlas
-float halfSize = 0.5f;
+float halfSize = 0.1f/2; // Half size of the cube
 // Texture coordinate origin (tile position in the atlas)
 glm::vec2 texCoordBack  = {3, 0};
 glm::vec2 texCoordFront = {3, 0};

@@ -1,0 +1,26 @@
+{
+    "window": {
+      "width": 2560,
+      "height": 1600,
+      "title": "MyVoxelEngine"
+    },
+    "textureAtlas": {
+      "path": "assets/atlas.png",
+      "width": 256,
+      "height": 256,
+      "blocksPerRow": 16,
+      "blocksPerCol": 16
+    },
+    "camera": {
+      "position": [0.0, 0.0, 3.0],
+      "front": [0.0, 0.0, -1.0],
+      "up": [0.0, 1.0, 0.0],
+      "yaw": -90.0,
+      "pitch": 0.0,
+      "fov": 70.0
+    },
+    "performance": {
+      "numSamples": 100
+    },
+    "voxelScale": 0.1
+  }

@@ -50,14 +50,19 @@ include_directories(
     Shaders/voxel_fragment.glsl
     Shaders/voxel_fragment.glsl
 )
-
+# Add the submodule include path
+include_directories(${CMAKE_SOURCE_DIR}/Include/json/include)
 # Source files
 add_executable(${PROJECT_NAME} 
                 Source/Application2.cpp
                 Source/Utils/GpuUsage.cpp
+                Source/Utils/ConfigReader.h
+                Source/Utils/ConfigReader.cpp
+                Source/Utils/HeightMapGenerator.h
+                Source/Utils/HeightMapGenerator.cpp
                 Source/World/Voxel.h
                 Source/World/Voxel.cpp)
-target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets")
+target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     glad
