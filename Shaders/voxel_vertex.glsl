@@ -11,36 +11,75 @@ uniform mat4 model;
 uniform float atlasSize;
 
 out vec2 TexCoord;
-out uint BlockId;
-out vec3 FragPos;     // Fragment position in world space
-out vec3 Normal;      // Normal in world space
+flat out uint BlockId;  // Added flat qualifier
+out vec3 FragPos;     
+out vec3 Normal;      
 
 vec2 getBlockTexCoords(uint blockId, vec3 normal) {
     vec2 baseCoord;
     
-    // Determine which face we're on based on the normal
     if (normal.y > 0.5) {         // Top face
-        baseCoord = (blockId == 1u) ? vec2(0, 0) : vec2(2, 0);  // Grass top for block 1, dirt for others
+        if (blockId == 1u) {
+            baseCoord = vec2(0, 0);  // Grass top
+        } else if (blockId == 2u) {
+            baseCoord = vec2(2, 0);  // Dirt
+        } else if (blockId == 3u) {
+            baseCoord = vec2(1, 0);  // Stone
+        } else if (blockId == 4u) {
+            baseCoord = vec2(4, 0);  // Wood top
+        } else if (blockId == 5u) {
+            baseCoord = vec2(6, 0);  // Leaves
+        } else if (blockId == 6u) {
+            baseCoord = vec2(7, 0);  // Lava
+        } else if (blockId == 7u) {
+            baseCoord = vec2(8, 0);  // Water
+        }
     }
     else if (normal.y < -0.5) {   // Bottom face
-        baseCoord = vec2(2, 0);   // Always dirt
+        if (blockId == 1u) {
+            baseCoord = vec2(2, 0);  // Dirt for grass bottom
+        } else if (blockId == 2u) {
+            baseCoord = vec2(2, 0);  // Dirt
+        } else if (blockId == 3u) {
+            baseCoord = vec2(1, 0);  // Stone
+        } else if (blockId == 4u) {
+            baseCoord = vec2(4, 0);  // Wood top
+        } else if (blockId == 5u) {
+            baseCoord = vec2(6, 0);  // Leaves
+        } else if (blockId == 6u) {
+            baseCoord = vec2(7, 0);  // Lava
+        } else if (blockId == 7u) {
+            baseCoord = vec2(8, 0);  // Water
+        }
     }
     else {                        // Side faces
-        baseCoord = (blockId == 1u) ? vec2(3, 0) : vec2(2, 0);  // Grass side for block 1, dirt for others
+        if (blockId == 1u) {
+            baseCoord = vec2(3, 0);  // Grass side
+        } else if (blockId == 2u) {
+            baseCoord = vec2(2, 0);  // Dirt
+        } else if (blockId == 3u) {
+            baseCoord = vec2(1, 0);  // Stone
+        } else if (blockId == 4u) {
+            baseCoord = vec2(5, 0);  // Wood side
+        } else if (blockId == 5u) {
+            baseCoord = vec2(6, 0);  // Leaves
+        } else if (blockId == 6u) {
+            baseCoord = vec2(7, 0);  // Lava
+        } else if (blockId == 7u) {
+            baseCoord = vec2(8, 0);  // Water
+        }
     }
     
-    // Apply the base UV offset within the atlas
+    // Scale coordinates to atlas size
     return (baseCoord + aTexCoord) / atlasSize;
 }
 
 void main() {
     vec3 worldPos = aPos + instancePosition;
     FragPos = worldPos;
-    
-    // Transform normal to world space
     Normal = mat3(transpose(inverse(model))) * aNormal;
-    
     gl_Position = projection * view * vec4(worldPos, 1.0);
+    
     TexCoord = getBlockTexCoords(blockId, aNormal);
     BlockId = blockId;
 }

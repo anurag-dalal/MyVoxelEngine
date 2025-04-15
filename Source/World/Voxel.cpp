@@ -76,6 +76,36 @@ VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textu
     dirtBlock.top = dirtBlock.bottom = dirtBlock.front = 
     dirtBlock.back = dirtBlock.left = dirtBlock.right = glm::vec2(2, 0);  // All dirt
     blockTextures[2] = dirtBlock;
+
+    // Stone block (ID 3)
+    BlockTexture stoneBlock;
+    stoneBlock.top = stoneBlock.bottom = stoneBlock.front =
+    stoneBlock.back = stoneBlock.left = stoneBlock.right = glm::vec2(1, 0);  // All stone
+    blockTextures[3] = stoneBlock;
+
+    // Wood block (ID 4)
+    BlockTexture woodBlock;
+    woodBlock.top = woodBlock.bottom = glm::vec2(4, 0);  // Wood end texture
+    woodBlock.front = woodBlock.back = woodBlock.left = woodBlock.right = glm::vec2(5, 0);  // Wood side texture
+    blockTextures[4] = woodBlock;
+
+    // Leaves block (ID 5)
+    BlockTexture leavesBlock;
+    leavesBlock.top = leavesBlock.bottom = leavesBlock.front =
+    leavesBlock.back = leavesBlock.left = leavesBlock.right = glm::vec2(6, 0);  // All leaves
+    blockTextures[5] = leavesBlock;
+
+    // Lava block (ID 6)
+    BlockTexture lavaBlock;
+    lavaBlock.top = lavaBlock.bottom = lavaBlock.front =
+    lavaBlock.back = lavaBlock.left = lavaBlock.right = glm::vec2(7, 0);  // All lava
+    blockTextures[6] = lavaBlock;
+
+    // Water block (ID 7)
+    BlockTexture waterBlock;
+    waterBlock.top = waterBlock.bottom = waterBlock.front =
+    waterBlock.back = waterBlock.left = waterBlock.right = glm::vec2(8, 0);  // All water
+    blockTextures[7] = waterBlock;
 }
 VoxelRenderer::~VoxelRenderer() {
     glDeleteProgram(shaderProgram);

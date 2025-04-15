@@ -2,22 +2,19 @@
 out vec4 FragColor;
 
 in vec2 TexCoord;
-in uint BlockId;
+flat in uint BlockId;  // Added flat qualifier to match vertex shader
 in vec3 FragPos;
 in vec3 Normal;
 
 uniform sampler2D textureAtlas;
-uniform float atlasSize;
-
-// Lighting uniforms
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform float ambientStrength;
 
 void main() {
-    vec2 uv = TexCoord;
-    vec4 texColor = texture(textureAtlas, uv);
+    // Sample texture based on UV coordinates
+    vec4 texColor = texture(textureAtlas, TexCoord);
     
     // Ambient lighting
     vec3 ambient = ambientStrength * lightColor;
@@ -28,14 +25,15 @@ void main() {
     vec3 diffuse = diff * lightColor;
     
     // Specular lighting
-    float specularStrength = 0.5;
+    float specularStrength = 0.3;  // Reduced for a more natural look on blocks
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(normalize(lightDir), norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);  // Reduced shininess
     vec3 specular = specularStrength * spec * lightColor;
     
-    // Combine lighting
-    vec3 lighting = ambient + diffuse + specular;
+    // Apply lighting
+    vec3 result = (ambient + diffuse + specular) * texColor.rgb;
     
-    FragColor = vec4(lighting, 1.0) * texColor;
+    // Output final color with texture alpha
+    FragColor = vec4(result, texColor.a);
 }

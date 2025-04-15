@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -20,6 +21,7 @@
 #include "World/Voxel.h" // Include the Voxel header
 #include "Utils/ConfigReader.h"// Include the ConfigReader header
 #include "Utils/HeightMapGenerator.h"
+#include "Models/Tree.h"
 
 Config config = loadConfig(CONFIG_FILE);
 
@@ -181,56 +183,76 @@ int main()
 
     // Create a large number of voxels
     std::vector<Voxel> voxelsToRender;
-    int n = 64; // Example: 32x32x32 grid of voxels
-    // for (int x = 0; x < n; ++x) {
-    //     for (int y = 0; y < n; ++y) {
-    //         for (int z = 0; z < n; ++z) {
-    //             //if (rand() % 100 > 10) // 10% chance
-    //               //  continue;
-    //             voxelsToRender.emplace_back(glm::vec3(x*config.voxelScale, y*config.voxelScale, z*config.voxelScale), (x + y * n + z * n * n) % 256); // Example block ID
-    //         }
-    //     }
-    // }
-
-    // HeightMapGenerator generator(n, n, 0.0f, static_cast<float>(n - 1));
-    // auto heightmap = generator.generateRandom();
-
-    // for (int x = 0; x < n; ++x) {
-    //     for (int z = 0; z < n; ++z) {
-    //         int height = static_cast<int>(heightmap[z][x]); // z is row, x is column
-
-    //         for (int y = 0; y <= height; ++y) {
-    //             glm::vec3 position(x * config.voxelScale, y * config.voxelScale, z * config.voxelScale);
-    //             int blockId = y == height ? 1 : 2; // Example: top block is grass, below is dirt
-    //             voxelsToRender.emplace_back(position, blockId);
-    //         }
-    //     }
-    // }
+    std::vector<std::unique_ptr<Model>> models;
+    
     // Grid size
     const int vox_width = 128;
     const int vox_depth = 128;
     const int vox_maxHeight = 64;
-    float voxelScale = config.voxelScale; // From your config
+    float voxelScale = config.voxelScale;
+
+    // Store terrain heights for tree placement
+    std::vector<std::vector<int>> terrainHeights(vox_width, std::vector<int>(vox_depth));
 
     // Noise scaling factors
-    float frequency = 0.005f; // Controls terrain frequency
-    float amplitude = static_cast<float>(vox_maxHeight); // Controls max height
+    float frequency = 0.005f;
+    float amplitude = static_cast<float>(vox_maxHeight);
 
+    // Generate terrain
     for (int x = 0; x < vox_width; ++x) {
         for (int z = 0; z < vox_depth; ++z) {
             float noiseValue = stb_perlin_noise3(x * frequency, 0.0f, z * frequency, 0, 0, 0);
             noiseValue = (noiseValue + 1.0f) / 2.0f;
             int height = static_cast<int>(noiseValue * amplitude);
+            terrainHeights[x][z] = height;
 
             // Fill voxels up to the height
             for (int y = 0; y <= height; ++y) {
                 glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
-                // Use block ID 1 (grass) for top block, 2 (dirt) for others
                 int blockId = (y == height) ? 1 : 2;
                 voxelsToRender.emplace_back(position, blockId);
             }
         }
     }
+
+    // Random number generation for tree placement
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> treeDist(0.0, 1.0);
+    float treeDensity = 0.01f; // 1% chance of a tree at each valid position
+
+    // Place trees
+    for (int x = 2; x < vox_width - 2; ++x) {
+        for (int z = 2; z < vox_depth - 2; ++z) {  // Fixed z loop condition
+            // Only place trees on grass blocks with some probability
+            if (treeDist(gen) < treeDensity) {
+                int height = terrainHeights[x][z];
+                
+                // Check if surrounding terrain is relatively flat (no more than 2 blocks difference)
+                bool canPlaceTree = true;
+                for (int dx = -1; dx <= 1 && canPlaceTree; ++dx) {
+                    for (int dz = -1; dz <= 1 && canPlaceTree; ++dz) {  // Fixed dz loop condition
+                        if (abs(terrainHeights[x + dx][z + dz] - height) > 2) {
+                            canPlaceTree = false;
+                        }
+                    }
+                }
+
+                if (canPlaceTree) {
+                    // Apply voxel scale to the tree position
+                    glm::vec3 treePos(x * voxelScale, (height + 1) * voxelScale, z * voxelScale);
+                    models.push_back(std::make_unique<Tree>(treePos));
+                }
+            }
+        }
+    }
+
+    // Add model voxels to render list
+    for (const auto& model : models) {
+        auto modelVoxels = model->getVoxels();
+        voxelsToRender.insert(voxelsToRender.end(), modelVoxels.begin(), modelVoxels.end());
+    }
+
     glEnable(GL_DEPTH_TEST);
     const int NUM_SAMPLES = config.performance.numSamples;;
     std::vector<float> frameTimes(NUM_SAMPLES, 0.0f);

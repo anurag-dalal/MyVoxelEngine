@@ -60,6 +60,9 @@ add_executable(${PROJECT_NAME}
                 Source/Utils/ConfigReader.cpp
                 Source/Utils/HeightMapGenerator.h
                 Source/Utils/HeightMapGenerator.cpp
+                Source/Models/Model.h
+                Source/Models/Tree.h
+                Source/Models/Tree.cpp
                 Source/World/Voxel.h
                 Source/World/Voxel.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
