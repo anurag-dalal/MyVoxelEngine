@@ -55,7 +55,7 @@ include_directories(${CMAKE_SOURCE_DIR}/Include/json/include)
 # Source files
 add_executable(${PROJECT_NAME} 
                 Source/Application2.cpp
-                Source/Utils/GpuUsage.cpp
+                Source/Utils/SystemUsage.cpp
                 Source/Utils/ConfigReader.h
                 Source/Utils/ConfigReader.cpp
                 Source/Utils/HeightMapGenerator.h

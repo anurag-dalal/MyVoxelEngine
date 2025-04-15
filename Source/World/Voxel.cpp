@@ -8,67 +8,75 @@ glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
 }
 
-// Updated cube vertices with UVs from the atlas
-float halfSize = 0.1f/2; // Half size of the cube
-// Texture coordinate origin (tile position in the atlas)
-glm::vec2 texCoordBack  = {3, 0};
-glm::vec2 texCoordFront = {3, 0};
-glm::vec2 texCoordLeft  = {3, 0};
-glm::vec2 texCoordRight = {3, 0};
-glm::vec2 texCoordBottom= {2, 0};
-glm::vec2 texCoordTop   = {0, 0};
+// Updated cube vertices with default UVs - these will be updated per block type
+float halfSize = 0.1f/2;
 float unitCubeVerticesWithAtlasUV[] = {
     // Back face (-Z)
-    -halfSize, -halfSize, -halfSize, getUV(texCoordBack.x, texCoordBack.y + 1).x, getUV(texCoordBack.x, texCoordBack.y + 1).y, 0.0f, 0.0f, -1.0f,
-     halfSize, -halfSize, -halfSize, getUV(texCoordBack.x + 1, texCoordBack.y + 1).x, getUV(texCoordBack.x + 1, texCoordBack.y + 1).y, 0.0f, 0.0f, -1.0f,
-     halfSize,  halfSize, -halfSize, getUV(texCoordBack.x + 1, texCoordBack.y).x, getUV(texCoordBack.x + 1, texCoordBack.y).y, 0.0f, 0.0f, -1.0f,
-     halfSize,  halfSize, -halfSize, getUV(texCoordBack.x + 1, texCoordBack.y).x, getUV(texCoordBack.x + 1, texCoordBack.y).y, 0.0f, 0.0f, -1.0f,
-    -halfSize,  halfSize, -halfSize, getUV(texCoordBack.x, texCoordBack.y).x, getUV(texCoordBack.x, texCoordBack.y).y, 0.0f, 0.0f, -1.0f,
-    -halfSize, -halfSize, -halfSize, getUV(texCoordBack.x, texCoordBack.y + 1).x, getUV(texCoordBack.x, texCoordBack.y + 1).y, 0.0f, 0.0f, -1.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+     halfSize, -halfSize, -halfSize, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
 
     // Front face (+Z)
-    -halfSize, -halfSize,  halfSize, getUV(texCoordFront.x, texCoordFront.y + 1).x, getUV(texCoordFront.x, texCoordFront.y + 1).y, 0.0f, 0.0f, 1.0f,
-     halfSize, -halfSize,  halfSize, getUV(texCoordFront.x + 1, texCoordFront.y + 1).x, getUV(texCoordFront.x + 1, texCoordFront.y + 1).y, 0.0f, 0.0f, 1.0f,
-     halfSize,  halfSize,  halfSize, getUV(texCoordFront.x + 1, texCoordFront.y).x, getUV(texCoordFront.x + 1, texCoordFront.y).y, 0.0f, 0.0f, 1.0f,
-     halfSize,  halfSize,  halfSize, getUV(texCoordFront.x + 1, texCoordFront.y).x, getUV(texCoordFront.x + 1, texCoordFront.y).y, 0.0f, 0.0f, 1.0f,
-    -halfSize,  halfSize,  halfSize, getUV(texCoordFront.x, texCoordFront.y).x, getUV(texCoordFront.x, texCoordFront.y).y, 0.0f, 0.0f, 1.0f,
-    -halfSize, -halfSize,  halfSize, getUV(texCoordFront.x, texCoordFront.y + 1).x, getUV(texCoordFront.x, texCoordFront.y + 1).y, 0.0f, 0.0f, 1.0f,
+    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+     halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+     halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -halfSize,  halfSize,  halfSize, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
     // Left face (-X)
-    -halfSize,  halfSize,  halfSize, getUV(texCoordLeft.x + 1, texCoordLeft.y).x, getUV(texCoordLeft.x + 1, texCoordLeft.y).y, -1.0f, 0.0f, 0.0f,
-    -halfSize,  halfSize, -halfSize, getUV(texCoordLeft.x, texCoordLeft.y).x, getUV(texCoordLeft.x, texCoordLeft.y).y, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, getUV(texCoordLeft.x, texCoordLeft.y + 1).x, getUV(texCoordLeft.x, texCoordLeft.y + 1).y, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, getUV(texCoordLeft.x, texCoordLeft.y + 1).x, getUV(texCoordLeft.x, texCoordLeft.y + 1).y, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize,  halfSize, getUV(texCoordLeft.x + 1, texCoordLeft.y + 1).x, getUV(texCoordLeft.x + 1, texCoordLeft.y + 1).y, -1.0f, 0.0f, 0.0f,
-    -halfSize,  halfSize,  halfSize, getUV(texCoordLeft.x + 1, texCoordLeft.y).x, getUV(texCoordLeft.x + 1, texCoordLeft.y).y, -1.0f, 0.0f, 0.0f,
+    -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+    -halfSize, -halfSize,  halfSize, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+    -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 
     // Right face (+X)
-    halfSize,  halfSize,  halfSize, getUV(texCoordRight.x, texCoordRight.y).x, getUV(texCoordRight.x, texCoordRight.y).y, 1.0f, 0.0f, 0.0f,
-    halfSize,  halfSize, -halfSize, getUV(texCoordRight.x + 1, texCoordRight.y).x, getUV(texCoordRight.x + 1, texCoordRight.y).y, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize, -halfSize, getUV(texCoordRight.x + 1, texCoordRight.y + 1).x, getUV(texCoordRight.x + 1, texCoordRight.y + 1).y, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize, -halfSize, getUV(texCoordRight.x + 1, texCoordRight.y + 1).x, getUV(texCoordRight.x + 1, texCoordRight.y + 1).y, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize,  halfSize, getUV(texCoordRight.x, texCoordRight.y + 1).x, getUV(texCoordRight.x, texCoordRight.y + 1).y, 1.0f, 0.0f, 0.0f,
-    halfSize,  halfSize,  halfSize, getUV(texCoordRight.x, texCoordRight.y).x, getUV(texCoordRight.x, texCoordRight.y).y, 1.0f, 0.0f, 0.0f,
+    halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 
     // Bottom face (-Y)
-    -halfSize, -halfSize, -halfSize, getUV(texCoordBottom.x, texCoordBottom.y).x, getUV(texCoordBottom.x, texCoordBottom.y).y, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize, -halfSize, getUV(texCoordBottom.x + 1, texCoordBottom.y).x, getUV(texCoordBottom.x + 1, texCoordBottom.y).y, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize,  halfSize, getUV(texCoordBottom.x + 1, texCoordBottom.y + 1).x, getUV(texCoordBottom.x + 1, texCoordBottom.y + 1).y, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize,  halfSize, getUV(texCoordBottom.x + 1, texCoordBottom.y + 1).x, getUV(texCoordBottom.x + 1, texCoordBottom.y + 1).y, 0.0f, -1.0f, 0.0f,
-    -halfSize, -halfSize,  halfSize, getUV(texCoordBottom.x, texCoordBottom.y + 1).x, getUV(texCoordBottom.x, texCoordBottom.y + 1).y, 0.0f, -1.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, getUV(texCoordBottom.x, texCoordBottom.y).x, getUV(texCoordBottom.x, texCoordBottom.y).y, 0.0f, -1.0f, 0.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+     halfSize, -halfSize, -halfSize, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+    -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
 
     // Top face (+Y)
-    -halfSize,  halfSize, -halfSize, getUV(texCoordTop.x, texCoordTop.y).x, getUV(texCoordTop.x, texCoordTop.y).y, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize, -halfSize, getUV(texCoordTop.x + 1, texCoordTop.y).x, getUV(texCoordTop.x + 1, texCoordTop.y).y, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize,  halfSize, getUV(texCoordTop.x + 1, texCoordTop.y + 1).x, getUV(texCoordTop.x + 1, texCoordTop.y + 1).y, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize,  halfSize, getUV(texCoordTop.x + 1, texCoordTop.y + 1).x, getUV(texCoordTop.x + 1, texCoordTop.y + 1).y, 0.0f, 1.0f, 0.0f,
-    -halfSize,  halfSize,  halfSize, getUV(texCoordTop.x, texCoordTop.y + 1).x, getUV(texCoordTop.x, texCoordTop.y + 1).y, 0.0f, 1.0f, 0.0f,
-    -halfSize,  halfSize, -halfSize, getUV(texCoordTop.x, texCoordTop.y).x, getUV(texCoordTop.x, texCoordTop.y).y, 0.0f, 1.0f, 0.0f
+    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+     halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+    -halfSize,  halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
 };
 
 // Constructor and Destructor
-VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0) {}
+VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0) {
+    // Set up default block textures
+    
+    // Grass block (ID 1)
+    BlockTexture grassBlock;
+    grassBlock.top = glm::vec2(0, 0);      // Green grass top
+    grassBlock.bottom = glm::vec2(2, 0);    // Dirt bottom
+    grassBlock.front = grassBlock.back = grassBlock.left = grassBlock.right = glm::vec2(3, 0);  // Grass side
+    blockTextures[1] = grassBlock;
+
+    // Dirt block (ID 2)
+    BlockTexture dirtBlock;
+    dirtBlock.top = dirtBlock.bottom = dirtBlock.front = 
+    dirtBlock.back = dirtBlock.left = dirtBlock.right = glm::vec2(2, 0);  // All dirt
+    blockTextures[2] = dirtBlock;
+}
 VoxelRenderer::~VoxelRenderer() {
     glDeleteProgram(shaderProgram);
     glDeleteBuffers(1, &instanceVBO);
@@ -227,4 +235,20 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
 // Set texture atlas
 void VoxelRenderer::setTextureAtlas(unsigned int textureId) {
     textureAtlasId = textureId;
+}
+
+void VoxelRenderer::setBlockTexture(unsigned int blockId, const BlockTexture& textures) {
+    blockTextures[blockId] = textures;
+}
+
+BlockTexture VoxelRenderer::getBlockTexture(unsigned int blockId) const {
+    auto it = blockTextures.find(blockId);
+    if (it != blockTextures.end()) {
+        return it->second;
+    }
+    // Return default texture coordinates if block ID not found
+    BlockTexture defaultTexture;
+    defaultTexture.top = defaultTexture.bottom = defaultTexture.front = 
+    defaultTexture.back = defaultTexture.left = defaultTexture.right = glm::vec2(0, 0);
+    return defaultTexture;
 }

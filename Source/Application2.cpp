@@ -16,7 +16,7 @@
 #include "stb_image.h"
 #define STB_PERLIN_IMPLEMENTATION
 #include "stb_perlin.h"
-#include "Utils/GpuUsage.cpp"
+#include "Utils/SystemUsage.cpp"
 #include "World/Voxel.h" // Include the Voxel header
 #include "Utils/ConfigReader.h"// Include the ConfigReader header
 #include "Utils/HeightMapGenerator.h"
@@ -218,17 +218,15 @@ int main()
 
     for (int x = 0; x < vox_width; ++x) {
         for (int z = 0; z < vox_depth; ++z) {
-            // Generate a height value using Perlin noise (normalized to [0, 1])
             float noiseValue = stb_perlin_noise3(x * frequency, 0.0f, z * frequency, 0, 0, 0);
-            noiseValue = (noiseValue + 1.0f) / 2.0f; // Remap from [-1,1] to [0,1]
+            noiseValue = (noiseValue + 1.0f) / 2.0f;
             int height = static_cast<int>(noiseValue * amplitude);
 
             // Fill voxels up to the height
             for (int y = 0; y <= height; ++y) {
                 glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
-
-                // You can get fancier with block types here
-                int blockId = (y == height) ? 1 : 2; // Top is grass, below is dirt
+                // Use block ID 1 (grass) for top block, 2 (dirt) for others
+                int blockId = (y == height) ? 1 : 2;
                 voxelsToRender.emplace_back(position, blockId);
             }
         }
@@ -237,7 +235,8 @@ int main()
     const int NUM_SAMPLES = config.performance.numSamples;;
     std::vector<float> frameTimes(NUM_SAMPLES, 0.0f);
     int frameIndex = 0;
-    GpuUsage gpu;
+    SystemUsage usage;
+    SystemUsageAsync usageAsync;
     glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
     while (!glfwWindowShouldClose(window))
     {
@@ -265,12 +264,14 @@ int main()
         ImGui::NewFrame();
 
         float fps = 1.0f / deltaTime;
-        ImGui::SetNextWindowSize(ImVec2(600, 300), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(600, 350), ImGuiCond_Always);
         ImGui::Begin("Performance");
         ImGui::Text("FPS: %.1f", fps);
         ImGui::Text("Frame Time: %.2f ms", deltaTime * 1000.0f);
         ImGui::PlotLines("Frame Time (ms)", frameTimes.data(), NUM_SAMPLES, frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
-        ImGui::Text("GPU Usage: %.1d MB", gpu.get_usage());
+        ImGui::Text("GPU Usage: %.1d MB", usage.getGpuMemoryUsageMB());
+        ImGui::Text("RAM Usage: %ld MB", usage.getRamUsageMB());
+        ImGui::Text("CPU Usage: %.1f%%", usageAsync.getCpuUsagePercent());
         ImGui::End();
 
         ImGui::Render();

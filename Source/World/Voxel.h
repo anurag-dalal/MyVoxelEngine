@@ -4,9 +4,19 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <map>
 
 // Declare camera position as extern
 extern glm::vec3 cameraPos;
+
+struct BlockTexture {
+    glm::vec2 top;
+    glm::vec2 bottom;
+    glm::vec2 front;
+    glm::vec2 back;
+    glm::vec2 left;
+    glm::vec2 right;
+};
 
 struct Voxel {
     glm::vec3 position;
@@ -23,6 +33,8 @@ public:
     void init();
     void render(const std::vector<Voxel>& voxels, const glm::mat4& view, const glm::mat4& projection);
     void setTextureAtlas(unsigned int textureId);
+    void setBlockTexture(unsigned int blockId, const BlockTexture& textures);
+    BlockTexture getBlockTexture(unsigned int blockId) const;
 
     // Add lighting setters
     void setLightDir(const glm::vec3& dir) { lightDir = dir; }
@@ -34,6 +46,7 @@ private:
     unsigned int instanceVBO;
     unsigned int VAO;
     unsigned int textureAtlasId;
+    std::map<unsigned int, BlockTexture> blockTextures;
     
     // Lighting properties
     glm::vec3 lightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
