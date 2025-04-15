@@ -199,11 +199,11 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &glm::mat4(1.0f)[0][0]);
 
-    // Set lighting uniforms
-    glUniform3f(glGetUniformLocation(shaderProgram, "lightDir"), -0.2f, -1.0f, -0.3f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
+    // Set lighting uniforms using member variables
+    glUniform3fv(glGetUniformLocation(shaderProgram, "lightDir"), 1, &lightDir[0]);
+    glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1, &lightColor[0]);
     glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, &cameraPos[0]);
-    glUniform1f(glGetUniformLocation(shaderProgram, "ambientStrength"), 0.4f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "ambientStrength"), ambientStrength);
 
     // Set texture uniforms
     glUniform1i(glGetUniformLocation(shaderProgram, "textureAtlas"), 0);

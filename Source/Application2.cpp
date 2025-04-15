@@ -173,6 +173,12 @@ int main()
     voxelRenderer.init();
     voxelRenderer.setTextureAtlas(texture);
 
+    // Set lighting properties
+    voxelRenderer.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 0.0f)); // Yellow light color
+    // voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    voxelRenderer.setAmbientStrength(0.4f);
+
     // Create a large number of voxels
     std::vector<Voxel> voxelsToRender;
     int n = 64; // Example: 32x32x32 grid of voxels
