@@ -22,5 +22,5 @@
     "performance": {
       "numSamples": 100
     },
-    "voxelScale": 0.1
+    "voxelScale": 0.08
   }

@@ -3,13 +3,15 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include "../Utils/ConfigReader.h"
 
 glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
 }
 
-// Updated cube vertices with default UVs - these will be updated per block type
-float halfSize = 0.1f/2;
+// Get config and set halfSize using voxelScale
+Config config2 = loadConfig(CONFIG_FILE);
+float halfSize = config2.voxelScale/2;
 float unitCubeVerticesWithAtlasUV[] = {
     // Back face (-Z)
     -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,

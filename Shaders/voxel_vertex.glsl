@@ -26,9 +26,9 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
         } else if (blockId == 3u) {
             baseCoord = vec2(1, 0);  // Stone
         } else if (blockId == 4u) {
-            baseCoord = vec2(4, 0);  // Wood top
+            baseCoord = vec2(4, 1);  // Wood top
         } else if (blockId == 5u) {
-            baseCoord = vec2(6, 0);  // Leaves
+            baseCoord = vec2(4, 3);  // Leaves
         } else if (blockId == 6u) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {
@@ -43,9 +43,9 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
         } else if (blockId == 3u) {
             baseCoord = vec2(1, 0);  // Stone
         } else if (blockId == 4u) {
-            baseCoord = vec2(4, 0);  // Wood top
+            baseCoord = vec2(4, 1);  // Wood top
         } else if (blockId == 5u) {
-            baseCoord = vec2(6, 0);  // Leaves
+            baseCoord = vec2(4, 3);  // Leaves
         } else if (blockId == 6u) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {
@@ -60,9 +60,9 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
         } else if (blockId == 3u) {
             baseCoord = vec2(1, 0);  // Stone
         } else if (blockId == 4u) {
-            baseCoord = vec2(5, 0);  // Wood side
+            baseCoord = vec2(4, 1);  // Wood side
         } else if (blockId == 5u) {
-            baseCoord = vec2(6, 0);  // Leaves
+            baseCoord = vec2(5, 3);  // Leaves
         } else if (blockId == 6u) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {

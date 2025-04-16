@@ -11,7 +11,8 @@ private:
     static std::uniform_int_distribution<> crownSizeDist;
 
 public:
-    Tree(const glm::vec3& pos = glm::vec3(0.0f)) : Model(pos) {
+    Tree(const glm::vec3& pos = glm::vec3(0.0f), float voxelScale = 0.1f) 
+        : Model(pos, glm::vec3(0.0f), voxelScale) {
         generateTree();
     }
 

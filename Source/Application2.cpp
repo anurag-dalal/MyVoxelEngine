@@ -36,6 +36,7 @@ const int BLOCKS_PER_ROW = config.textureAtlas.blocksPerRow;
 const int BLOCKS_PER_COL = config.textureAtlas.blocksPerCol;
 
 // Voxel scale
+
 const float VOXEL_SCALE = config.voxelScale;
 
 // Camera
@@ -241,7 +242,7 @@ int main()
                 if (canPlaceTree) {
                     // Apply voxel scale to the tree position
                     glm::vec3 treePos(x * voxelScale, (height + 1) * voxelScale, z * voxelScale);
-                    models.push_back(std::make_unique<Tree>(treePos));
+                    models.push_back(std::make_unique<Tree>(treePos, voxelScale));
                 }
             }
         }
