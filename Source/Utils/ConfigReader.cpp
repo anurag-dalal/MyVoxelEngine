@@ -33,6 +33,7 @@ Config loadConfig(const std::string& filename) {
     config.fullscreen.borderless = j["fullscreen"]["borderless"].get<bool>();
     config.performance.numSamples = j["performance"]["numSamples"];
     config.voxelScale = j["voxelScale"];
+    config.skyname = j["skyname"];
 
     return config;
 }

@@ -49,6 +49,7 @@ struct Config {
     GridConfig gridConfig;
     float voxelScale;
     FullscreenConfig fullscreen;
+    std::string skyname;
 };
 
 // Declaration only

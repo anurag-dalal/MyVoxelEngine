@@ -276,7 +276,7 @@ int main()
 
     // Set lighting properties
     voxelRenderer.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
-    voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 0.0f)); // Yellow light color
+    voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f)); // Yellow light color
     // voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
     voxelRenderer.setAmbientStrength(0.4f);
 
@@ -296,6 +296,7 @@ int main()
     // Noise scaling factors
     float frequency = 0.005f;
     float amplitude = static_cast<float>(vox_maxHeight);
+    const int waterLevel = static_cast<int>(amplitude * 0.5f);
 
     // Generate terrain
     for (int x = 0; x < vox_width; ++x) {
@@ -371,15 +372,15 @@ int main()
 
     // Create and compile skybox shader
     skyboxShader = createShaderProgram("Shaders/skybox.vert", "Shaders/skybox.frag");
+    std::string skyboxDir = std::string(ASSETS_DIR) + "/Clouds/" + config.skyname;
 
-    // Load skybox textures
     skyboxTexture = new CubemapTexture(
-        "Assets/Clouds/clearsky/px.png", // +X
-        "Assets/Clouds/clearsky/nx.png", // -X
-        "Assets/Clouds/clearsky/py.png", // +Y
-        "Assets/Clouds/clearsky/ny.png", // -Y
-        "Assets/Clouds/clearsky/pz.png", // +Z
-        "Assets/Clouds/clearsky/nz.png"  // -Z
+        skyboxDir + "/px.png", // +X
+        skyboxDir + "/nx.png", // -X
+        skyboxDir + "/py.png", // +Y
+        skyboxDir + "/ny.png", // -Y
+        skyboxDir + "/pz.png", // +Z
+        skyboxDir + "/nz.png"  // -Z
     );
     if (!skyboxTexture->Load()) {
         std::cerr << "Failed to load skybox textures!" << std::endl;
