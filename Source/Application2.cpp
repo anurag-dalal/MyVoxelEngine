@@ -117,28 +117,36 @@ int main()
 
     // Set up window
     GLFWwindow *window;
-    if (config.fullscreen)
+    if (config.fullscreen.enabled)
     {
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor(); // Get main monitor
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor); // Get resolution
-
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-        // Create fullscreen window at monitor's resolution
-        window = glfwCreateWindow(mode->width, mode->height, "OpenGL Fullscreen", monitor, nullptr);
-        glfwSetWindowPos(window, 0, 0);
-        std::cout << mode->width << " " << mode->height << std::endl;
-
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        
+        // Set window hints for fullscreen
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        
+        if (config.fullscreen.borderless)
+        {
+            // Borderless fullscreen (windowed fullscreen)
+            glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+            window = glfwCreateWindow(mode->width, mode->height, config.window.title.c_str(), nullptr, nullptr);
+            glfwSetWindowPos(window, 0, 0);
+        }
+        else
+        {
+            // True fullscreen
+            window = glfwCreateWindow(mode->width, mode->height, config.window.title.c_str(), monitor, nullptr);
+        }
     }
     else
     {
-        window = glfwCreateWindow(config.window.width, config.window.height, config.window.title.c_str(), NULL, NULL);
-        glfwSetWindowPos(window, 0, 0);
+        window = glfwCreateWindow(config.window.width, config.window.height, config.window.title.c_str(), nullptr, nullptr);
     }
 
-    if (window == NULL)
+    if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window\n";
         glfwTerminate();

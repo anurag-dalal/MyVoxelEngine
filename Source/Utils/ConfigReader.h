@@ -29,11 +29,18 @@ struct WindowConfig {
 struct PerformanceConfig {
     int numSamples;
 };
+
 struct GridConfig {
     int vox_width;
     int vox_depth;
     int vox_maxHeight;
 };
+
+struct FullscreenConfig {
+    bool enabled;
+    bool borderless;
+};
+
 struct Config {
     WindowConfig window;
     TextureAtlasConfig textureAtlas;
@@ -41,7 +48,7 @@ struct Config {
     PerformanceConfig performance;
     GridConfig gridConfig;
     float voxelScale;
-    bool fullscreen;
+    FullscreenConfig fullscreen;
 };
 
 // Declaration only
