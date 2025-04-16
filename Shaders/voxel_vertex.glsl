@@ -35,6 +35,8 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {
             baseCoord = vec2(0, 9);  // Water
+        } else if (blockId == 8u) {
+            baseCoord = vec2(2, 1);  // Sand
         }
     }
     else if (normal.y < -0.5) {   // Bottom face
@@ -52,6 +54,8 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {
             baseCoord = vec2(0, 9);  // Water
+        } else if (blockId == 8u) {
+            baseCoord = vec2(2, 1);  // Sand
         }
     }
     else {                        // Side faces
@@ -69,6 +73,8 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(7, 0);  // Lava
         } else if (blockId == 7u) {
             baseCoord = vec2(0, 9);  // Water
+        } else if (blockId == 8u) {
+            baseCoord = vec2(2, 1);  // Sand
         }
     }
     

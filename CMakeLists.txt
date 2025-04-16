@@ -68,7 +68,11 @@ add_executable(${PROJECT_NAME}
                 Source/Sky/ogldev_cubemap_texture.h
                 Source/Sky/cubemap_texture.cpp
                 Source/World/Voxel.h
-                Source/World/Voxel.cpp)
+                Source/World/Voxel.cpp
+                Source/World/Generation/Biome.h
+                Source/World/Generation/Biome.cpp
+                Source/World/Generation/BasicBiome.h
+                Source/World/Generation/BasicBiome.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
 # Link libraries
 target_link_libraries(${PROJECT_NAME}

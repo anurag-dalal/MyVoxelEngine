@@ -24,6 +24,7 @@
 #include "Utils/ShaderUtils.h"
 #include "Models/Tree.h"
 #include "Sky/ogldev_cubemap_texture.h"
+#include "World/Generation/BasicBiome.h"
 
 Config config = loadConfig(CONFIG_FILE);
 
@@ -280,87 +281,15 @@ int main()
     // voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
     voxelRenderer.setAmbientStrength(0.4f);
 
-    // Create a large number of voxels
-    std::vector<Voxel> voxelsToRender;
-    std::vector<std::unique_ptr<Model>> models;
-    
-    // Grid size
-    const int vox_width = config.gridConfig.vox_width;
-    const int vox_depth = config.gridConfig.vox_depth;
-    const int vox_maxHeight = config.gridConfig.vox_maxHeight;
-    float voxelScale = config.voxelScale;
+    // Create and setup the biome
+    BasicBiome biome(config);
+    biome.setTextureAtlas(texture);
+    biome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    biome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    biome.setAmbientStrength(0.4f);
 
-    // Store terrain heights for tree placement
-    std::vector<std::vector<int>> terrainHeights(vox_width, std::vector<int>(vox_depth));
-
-    // Noise scaling factors
-    float frequency = 0.008f;
-    float amplitude = static_cast<float>(vox_maxHeight);
-    const int waterLevel = static_cast<int>(amplitude * 0.35f);
-
-    // Generate terrain
-    for (int x = 0; x < vox_width; ++x) {
-        for (int z = 0; z < vox_depth; ++z) {
-            float noiseValue = stb_perlin_noise3(x * frequency, 0.0f, z * frequency, 0, 0, 0);
-            noiseValue = (noiseValue + 1.0f) / 2.0f;
-            int height = static_cast<int>(noiseValue * amplitude);
-            terrainHeights[x][z] = height;
-
-            // Fill voxels up to the height
-            for (int y = 0; y <= height; ++y) {
-                glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
-                int blockId = (y == height) ? 1 : 2;
-                voxelsToRender.emplace_back(position, blockId);
-            }
-
-            // Fill water in the cavity if terrain is below water level
-            for (int y = height + 1; y <= waterLevel; ++y) {
-                glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
-                voxelsToRender.emplace_back(position, 7); // Water blockId = 7
-            }
-        }
-    }
-
-    // Random number generation for tree placement
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> treeDist(0.0, 1.0);
-    float treeDensity = 0.01f; // 1% chance of a tree at each valid position
-
-    // Place trees
-    for (int x = 2; x < vox_width - 2; ++x) {
-        for (int z = 2; z < vox_depth - 2; ++z) {  // Fixed z loop condition
-            // Only place trees on grass blocks with some probability
-            if (treeDist(gen) < treeDensity) {
-                int height = terrainHeights[x][z];
-
-                    // Don't place trees under water
-                    if (height <= waterLevel) continue;
-                
-                // Check if surrounding terrain is relatively flat (no more than 2 blocks difference)
-                bool canPlaceTree = true;
-                for (int dx = -1; dx <= 1 && canPlaceTree; ++dx) {
-                    for (int dz = -1; dz <= 1 && canPlaceTree; ++dz) {  // Fixed dz loop condition
-                        if (abs(terrainHeights[x + dx][z + dz] - height) > 2) {
-                            canPlaceTree = false;
-                        }
-                    }
-                }
-
-                if (canPlaceTree) {
-                    // Apply voxel scale to the tree position
-                    glm::vec3 treePos(x * voxelScale, (height + 1) * voxelScale, z * voxelScale);
-                    models.push_back(std::make_unique<Tree>(treePos, voxelScale));
-                }
-            }
-        }
-    }
-
-    // Add model voxels to render list
-    for (const auto& model : models) {
-        auto modelVoxels = model->getVoxels();
-        voxelsToRender.insert(voxelsToRender.end(), modelVoxels.begin(), modelVoxels.end());
-    }
+    // Generate terrain using the biome
+    std::vector<Voxel> voxelsToRender = biome.generateTerrain();
 
     glEnable(GL_DEPTH_TEST);
     const int NUM_SAMPLES = config.performance.numSamples;;

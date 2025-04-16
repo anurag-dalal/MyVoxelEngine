@@ -24,9 +24,9 @@
     "fov": 70.0
   },
   "gridConfig": {
-    "vox_width": 256,
-    "vox_depth": 256,
-    "vox_maxHeight": 30
+    "vox_width": 512,
+    "vox_depth": 512,
+    "vox_maxHeight": 40
   },
   "performance": {
     "numSamples": 100
