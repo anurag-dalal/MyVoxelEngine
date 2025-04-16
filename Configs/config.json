@@ -24,13 +24,14 @@
     "fov": 70.0
   },
   "gridConfig": {
-    "vox_width": 512,
-    "vox_depth": 512,
-    "vox_maxHeight": 40
+    "vox_width": 256,
+    "vox_depth": 256,
+    "vox_maxHeight": 64
   },
   "performance": {
     "numSamples": 100
   },
+
   "voxelScale": 0.08,
   "skyname": "clearsky"
 }
