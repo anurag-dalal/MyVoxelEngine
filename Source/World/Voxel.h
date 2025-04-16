@@ -55,8 +55,8 @@ private:
     // Shadow mapping
     unsigned int depthMapFBO;
     unsigned int depthMap;
-    const unsigned int SHADOW_WIDTH = 4096*2;
-    const unsigned int SHADOW_HEIGHT = 4096*2;
+    const unsigned int SHADOW_WIDTH = 4096;
+    const unsigned int SHADOW_HEIGHT = 4096;
     
     // Lighting properties
     glm::vec3 lightDir = glm::vec3(-0.2f, -1.0f, -0.3f);

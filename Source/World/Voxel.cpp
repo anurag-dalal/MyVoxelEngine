@@ -290,9 +290,17 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
 
     glBindVertexArray(VAO);
 
-    // Update instance buffer
+    // Update instance buffer using glBufferSubData instead of glBufferData
+    static size_t lastBufferSize = 0;
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, voxels.size() * sizeof(Voxel), voxels.data(), GL_STATIC_DRAW);
+    
+    if (voxels.size() * sizeof(Voxel) > lastBufferSize) {
+        // Only reallocate if buffer needs to grow
+        glBufferData(GL_ARRAY_BUFFER, voxels.size() * sizeof(Voxel), nullptr, GL_DYNAMIC_DRAW);
+        lastBufferSize = voxels.size() * sizeof(Voxel);
+    }
+    
+    glBufferSubData(GL_ARRAY_BUFFER, 0, voxels.size() * sizeof(Voxel), voxels.data());
 
     // Draw instanced cubes
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, voxels.size());

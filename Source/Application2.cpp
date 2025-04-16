@@ -224,6 +224,10 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+    
+    // Configure VSync based on settings
+    glfwSwapInterval(config.performance.vsync ? 1 : 0);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -332,6 +336,21 @@ int main()
         lastFrame = currentFrame;
         frameTimes[frameIndex] = deltaTime * 1000.0f; // store in milliseconds
         frameIndex = (frameIndex + 1) % NUM_SAMPLES;
+
+        // Frame timing control if vsync is disabled
+        if (!config.performance.vsync && config.performance.targetFPS > 0)
+        {
+            float targetFrameTime = 1.0f / config.performance.targetFPS;
+            float frameTime = (float)glfwGetTime() - currentFrame;
+            if (frameTime < targetFrameTime)
+            {
+                float sleepTime = (targetFrameTime - frameTime) * 1000.0f - 0.1f;
+                if (sleepTime > 0)
+                    std::this_thread::sleep_for(std::chrono::milliseconds((int)sleepTime));
+                while ((float)glfwGetTime() - currentFrame < targetFrameTime)
+                    ; // Spin-wait for the remainder
+            }
+        }
 
         processInput(window);
 

@@ -31,7 +31,11 @@ Config loadConfig(const std::string& filename) {
     
     config.fullscreen.enabled = j["fullscreen"]["enabled"].get<bool>();
     config.fullscreen.borderless = j["fullscreen"]["borderless"].get<bool>();
+    
     config.performance.numSamples = j["performance"]["numSamples"];
+    config.performance.vsync = j["performance"]["vsync"];
+    config.performance.targetFPS = j["performance"]["targetFPS"];
+    
     config.voxelScale = j["voxelScale"];
     config.skyname = j["skyname"];
 

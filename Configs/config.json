@@ -29,9 +29,10 @@
     "vox_maxHeight": 64
   },
   "performance": {
-    "numSamples": 100
+    "numSamples": 100,
+    "vsync": true,
+    "targetFPS": 60
   },
-
   "voxelScale": 0.08,
   "skyname": "clearsky"
 }

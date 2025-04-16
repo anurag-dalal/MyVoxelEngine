@@ -28,6 +28,8 @@ struct WindowConfig {
 
 struct PerformanceConfig {
     int numSamples;
+    bool vsync;
+    int targetFPS;
 };
 
 struct GridConfig {
