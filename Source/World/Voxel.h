@@ -43,17 +43,26 @@ public:
 
 private:
     unsigned int shaderProgram;
+    unsigned int shadowMapShader;  // New shader for shadow mapping pass
     unsigned int instanceVBO;
     unsigned int VAO;
     unsigned int textureAtlasId;
     std::map<unsigned int, BlockTexture> blockTextures;
+    
+    // Shadow mapping
+    unsigned int depthMapFBO;
+    unsigned int depthMap;
+    const unsigned int SHADOW_WIDTH = 4096*2;
+    const unsigned int SHADOW_HEIGHT = 4096*2;
     
     // Lighting properties
     glm::vec3 lightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     float ambientStrength = 0.4f;
     
-    // Shader loading utility
+    // Helper functions
+    void initShadowMap();
+    void renderShadowMap(const std::vector<Voxel>& voxels);
     unsigned int createShader(const char* vertexPath, const char* fragmentPath);
 };
 

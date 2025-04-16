@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include "../Utils/ConfigReader.h"
+#include <glm/gtc/matrix_transform.hpp>  // For glm::lookAt, glm::ortho
+#include <glm/gtx/transform.hpp>         // Additional transformation functions
 
 glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
@@ -63,7 +65,7 @@ float unitCubeVerticesWithAtlasUV[] = {
 };
 
 // Constructor and Destructor
-VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0) {
+VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0), depthMapFBO(0), depthMap(0), shadowMapShader(0) {
     // Set up default block textures
     
     // Grass block (ID 1)
@@ -113,6 +115,9 @@ VoxelRenderer::~VoxelRenderer() {
     glDeleteProgram(shaderProgram);
     glDeleteBuffers(1, &instanceVBO);
     glDeleteVertexArrays(1, &VAO);
+    glDeleteFramebuffers(1, &depthMapFBO);
+    glDeleteTextures(1, &depthMap);
+    glDeleteProgram(shadowMapShader);
 }
 unsigned int VoxelRenderer::createShader(const char* vertexPath, const char* fragmentPath) {
     unsigned int vertexShader = 0;
@@ -181,11 +186,48 @@ unsigned int VoxelRenderer::createShader(const char* vertexPath, const char* fra
 
     return program;
 }
+
+void VoxelRenderer::initShadowMap() {
+    // Create framebuffer
+    glGenFramebuffers(1, &depthMapFBO);
+    
+    // Create depth texture
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    
+    // Attach depth texture to framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cerr << "Framebuffer is not complete!" << std::endl;
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 // Initialization
 void VoxelRenderer::init() {
+    // Create main shader program
     shaderProgram = createShader((std::string(SHADER_DIR) + "/voxel_vertex.glsl").c_str(),
-                                 (std::string(SHADER_DIR) + "/voxel_fragment.glsl").c_str());
+                                (std::string(SHADER_DIR) + "/voxel_fragment.glsl").c_str());
+    
+    // Create shadow mapping shader program
+    shadowMapShader = createShader((std::string(SHADER_DIR) + "/shadow_mapping.vert").c_str(),
+                                 (std::string(SHADER_DIR) + "/shadow_mapping.frag").c_str());
 
+    // Initialize shadow mapping
+    initShadowMap();
+    
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
@@ -225,6 +267,37 @@ void VoxelRenderer::init() {
     glDeleteBuffers(1, &cubeVBO);
 }
 
+void VoxelRenderer::renderShadowMap(const std::vector<Voxel>& voxels) {
+    // Configure viewport to shadow map dimensions
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    
+    // Create light space matrix
+    float near_plane = 1.0f, far_plane = 100.0f;
+    glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
+    glm::mat4 lightView = glm::lookAt(-lightDir * 30.0f,  // Light position
+                                     glm::vec3(0.0f),      // Look at origin
+                                     glm::vec3(0.0, 1.0, 0.0));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+    
+    // Use shadow mapping shader
+    glUseProgram(shadowMapShader);
+    glUniformMatrix4fv(glGetUniformLocation(shadowMapShader, "lightSpaceMatrix"), 
+                       1, GL_FALSE, &lightSpaceMatrix[0][0]);
+    
+    // Bind VAO and update instance buffer
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, voxels.size() * sizeof(Voxel), voxels.data(), GL_STATIC_DRAW);
+    
+    // Draw shadow map
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, voxels.size());
+    
+    // Reset framebuffer and viewport
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 // Rendering the voxels
 void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& view, const glm::mat4& projection) {
     if (shaderProgram == 0 || textureAtlasId == 0) {
@@ -232,12 +305,28 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
         return;
     }
 
+    // First render pass: generate shadow map
+    renderShadowMap(voxels);
+    
+    // Second render pass: render scene with shadows
+    glViewport(0, 0, 2560, 1600); // TODO: Get actual window dimensions
+    
     glUseProgram(shaderProgram);
 
-    // Set matrix uniforms
+    // Calculate light space matrix (same as in renderShadowMap)
+    float near_plane = 1.0f, far_plane = 100.0f;
+    glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
+    glm::mat4 lightView = glm::lookAt(-lightDir * 30.0f, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    // Set uniforms
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &glm::mat4(1.0f)[0][0]);
+    
+    // Create model matrix - translate to origin for now
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
 
     // Set lighting uniforms using member variables
     glUniform3fv(glGetUniformLocation(shaderProgram, "lightDir"), 1, &lightDir[0]);
@@ -251,6 +340,10 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureAtlasId);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glUniform1i(glGetUniformLocation(shaderProgram, "shadowMap"), 1);
 
     glBindVertexArray(VAO);
 

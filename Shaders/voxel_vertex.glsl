@@ -8,12 +8,14 @@ layout(location = 4) in vec3 aNormal;     // Vertex normal
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
+uniform mat4 lightSpaceMatrix;
 uniform float atlasSize;
 
 out vec2 TexCoord;
 flat out uint BlockId;  // Added flat qualifier
 out vec3 FragPos;     
 out vec3 Normal;      
+out vec4 FragPosLightSpace;
 
 vec2 getBlockTexCoords(uint blockId, vec3 normal) {
     vec2 baseCoord;
@@ -75,10 +77,16 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
 }
 
 void main() {
+    // Apply model transformation to get world position
     vec3 worldPos = aPos + instancePosition;
-    FragPos = worldPos;
+    FragPos = vec3(model * vec4(worldPos, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
-    gl_Position = projection * view * vec4(worldPos, 1.0);
+    
+    // Calculate light space fragment position for shadows
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    
+    // Calculate final position in clip space
+    gl_Position = projection * view * vec4(FragPos, 1.0);
     
     TexCoord = getBlockTexCoords(blockId, aNormal);
     BlockId = blockId;

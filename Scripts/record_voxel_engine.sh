@@ -27,6 +27,6 @@ echo "📐 Capturing area: ${WIDTH}x${HEIGHT} at (${X},${Y})"
 echo "🎥 Starting ffmpeg recording..."
 
 ffmpeg -video_size ${WIDTH}x${HEIGHT} -framerate 60 -f x11grab -i ${DISPLAY_NUM}+${X},${Y} \
--c:v libx264 -preset ultrafast -crf 18 "$OUTPUT_FILE"
+-c:v libx264 -preset ultrafast -crf 40 "$OUTPUT_FILE"
 
 echo "✅ Recording complete: $OUTPUT_FILE"
