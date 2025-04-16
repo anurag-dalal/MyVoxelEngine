@@ -216,12 +216,24 @@ void VoxelRenderer::renderShadowMap(const std::vector<Voxel>& voxels) {
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    // Create light space matrix
-    float near_plane = 1.0f, far_plane = 100.0f;
-    glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
-    glm::mat4 lightView = glm::lookAt(-lightDir * 30.0f,  // Light position
-                                     glm::vec3(0.0f),      // Look at origin
-                                     glm::vec3(0.0, 1.0, 0.0));
+    // Create light space matrix - now centered at camera position
+    float near_plane = 1.0f, far_plane = 200.0f;
+    // Increase the size of the shadow frustum to cover the entire visible world
+    float shadowSize = 80.0f;
+    glm::mat4 lightProjection = glm::ortho(-shadowSize, shadowSize, -shadowSize, shadowSize, near_plane, far_plane);
+    
+    // Position light relative to camera to follow player through the world
+    // Extract xz-coordinates from camera to center shadows around player
+    glm::vec3 lightTarget = glm::vec3(cameraPos.x, 0.0f, cameraPos.z);
+    glm::vec3 lightPos = lightTarget - (lightDir * 80.0f);
+    // Keep y-offset high enough for a top-down shadow angle
+    lightPos.y = 70.0f;
+    
+    glm::mat4 lightView = glm::lookAt(
+        lightPos,            // Light position
+        lightTarget,         // Look at player's xz-position
+        glm::vec3(0.0, 1.0, 0.0) // Up vector
+    );
     glm::mat4 lightSpaceMatrix = lightProjection * lightView;
     
     // Use shadow mapping shader
@@ -234,8 +246,15 @@ void VoxelRenderer::renderShadowMap(const std::vector<Voxel>& voxels) {
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
     glBufferData(GL_ARRAY_BUFFER, voxels.size() * sizeof(Voxel), voxels.data(), GL_STATIC_DRAW);
     
+    // Enable polygon offset for shadow acne reduction
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(4.0f, 4.0f);
+    
     // Draw shadow map
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, voxels.size());
+    
+    // Disable polygon offset
+    glDisable(GL_POLYGON_OFFSET_FILL);
     
     // Reset framebuffer and viewport
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -72,7 +72,11 @@ add_executable(${PROJECT_NAME}
                 Source/World/Generation/Biome.h
                 Source/World/Generation/Biome.cpp
                 Source/World/Generation/BasicBiome.h
-                Source/World/Generation/BasicBiome.cpp)
+                Source/World/Generation/BasicBiome.cpp
+                Source/World/Chunk.h
+                Source/World/Chunk.cpp
+                Source/World/ChunkManager.h
+                Source/World/ChunkManager.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
 # Link libraries
 target_link_libraries(${PROJECT_NAME}

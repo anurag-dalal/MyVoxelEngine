@@ -25,6 +25,7 @@
 #include "Models/Tree.h"
 #include "Sky/ogldev_cubemap_texture.h"
 #include "World/Generation/BasicBiome.h"
+#include "World/ChunkManager.h" // Include the ChunkManager header
 
 Config config = loadConfig(CONFIG_FILE);
 
@@ -39,7 +40,6 @@ const int BLOCKS_PER_ROW = config.textureAtlas.blocksPerRow;
 const int BLOCKS_PER_COL = config.textureAtlas.blocksPerCol;
 
 // Voxel scale
-
 const float VOXEL_SCALE = config.voxelScale;
 
 // Camera
@@ -55,6 +55,9 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f;
+
+// Global chunk manager
+ChunkManager* chunkManager = nullptr;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -281,8 +284,7 @@ int main()
 
     // Set lighting properties
     voxelRenderer.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
-    voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f)); // Yellow light color
-    // voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
     voxelRenderer.setAmbientStrength(0.4f);
 
     // Create and setup the biome
@@ -292,8 +294,9 @@ int main()
     biome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
     biome.setAmbientStrength(0.4f);
 
-    // Generate terrain using the biome
-    std::vector<Voxel> voxelsToRender = biome.generateTerrain();
+    // Initialize the ChunkManager
+    chunkManager = new ChunkManager(config);
+    chunkManager->init(biome);
 
     glEnable(GL_DEPTH_TEST);
     const int NUM_SAMPLES = config.performance.numSamples;;
@@ -329,6 +332,10 @@ int main()
         return -1;
     }
 
+    // Stats for chunk system
+    int chunksLoaded = 0;
+    int totalVoxels = 0;
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
@@ -358,6 +365,16 @@ int main()
         glClearColor(0.2f, 0.3f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Update chunk loading based on camera position
+        chunkManager->updateChunks(cameraPos);
+        
+        // Get all visible voxels from loaded chunks
+        std::vector<Voxel> voxelsToRender = chunkManager->getVisibleVoxels();
+        
+        // Update stats
+        chunksLoaded = 0;
+        totalVoxels = voxelsToRender.size();
+
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
 
@@ -384,7 +401,7 @@ int main()
         ImGui::NewFrame();
 
         float fps = 1.0f / deltaTime;
-        ImGui::SetNextWindowSize(ImVec2(600, 350), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
         ImGui::Begin("Performance");
         ImGui::Text("FPS: %.1f", fps);
         ImGui::Text("Frame Time: %.2f ms", deltaTime * 1000.0f);
@@ -392,6 +409,9 @@ int main()
         ImGui::Text("GPU Usage: %.1d MB", usage.getGpuMemoryUsageMB());
         ImGui::Text("RAM Usage: %ld MB", usage.getRamUsageMB());
         ImGui::Text("CPU Usage: %.1f%%", usageAsync.getCpuUsagePercent());
+        ImGui::Separator();
+        ImGui::Text("Chunks: %d", chunksLoaded);
+        ImGui::Text("Voxels: %d", totalVoxels);
         ImGui::End();
 
         ImGui::Render();
@@ -404,6 +424,11 @@ int main()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    // Clean up chunk manager
+    if (chunkManager) {
+        delete chunkManager;
+    }
 
     glfwTerminate();
 
