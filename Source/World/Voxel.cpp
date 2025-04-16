@@ -6,6 +6,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>  // For glm::lookAt, glm::ortho
 #include <glm/gtx/transform.hpp>         // Additional transformation functions
+#include "../Utils/ShaderUtils.h"
 
 glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
@@ -121,73 +122,6 @@ VoxelRenderer::~VoxelRenderer() {
     glDeleteTextures(1, &depthMap);
     glDeleteProgram(shadowMapShader);
 }
-unsigned int VoxelRenderer::createShader(const char* vertexPath, const char* fragmentPath) {
-    unsigned int vertexShader = 0;
-    unsigned int fragmentShader = 0;
-    unsigned int program = 0;
-    int success;
-    char infoLog[512];
-
-    // Vertex Shader
-    std::ifstream vShaderFile;
-    std::stringstream vShaderStream;
-    vShaderFile.open(vertexPath);
-    if (vShaderFile.is_open()) {
-        vShaderStream << vShaderFile.rdbuf();
-        vShaderFile.close();
-        std::string vertexCode = vShaderStream.str();
-        const char* vShaderCode = vertexCode.c_str();
-
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vShaderCode, NULL);
-        glCompileShader(vertexShader);
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-        }
-    } else {
-        std::cerr << "ERROR::SHADER::VERTEX::FILE_NOT_SUCCESFULLY_READ\n";
-    }
-
-    // Fragment Shader
-    std::ifstream fShaderFile;
-    std::stringstream fShaderStream;
-    fShaderFile.open(fragmentPath);
-    if (fShaderFile.is_open()) {
-        fShaderStream << fShaderFile.rdbuf();
-        fShaderFile.close();
-        std::string fragmentCode = fShaderStream.str();
-        const char* fShaderCode = fragmentCode.c_str();
-
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
-        glCompileShader(fragmentShader);
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-        }
-    } else {
-        std::cerr << "ERROR::SHADER::FRAGMENT::FILE_NOT_SUCCESFULLY_READ\n";
-    }
-
-    // Shader Program
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(program, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return program;
-}
 
 void VoxelRenderer::initShadowMap() {
     // Create framebuffer
@@ -220,12 +154,16 @@ void VoxelRenderer::initShadowMap() {
 // Initialization
 void VoxelRenderer::init() {
     // Create main shader program
-    shaderProgram = createShader((std::string(SHADER_DIR) + "/voxel_vertex.glsl").c_str(),
-                                (std::string(SHADER_DIR) + "/voxel_fragment.glsl").c_str());
+    shaderProgram = ShaderUtils::createShaderProgram(
+        std::string(SHADER_DIR) + "/voxel_vertex.glsl",
+        std::string(SHADER_DIR) + "/voxel_fragment.glsl"
+    );
     
     // Create shadow mapping shader program
-    shadowMapShader = createShader((std::string(SHADER_DIR) + "/shadow_mapping.vert").c_str(),
-                                 (std::string(SHADER_DIR) + "/shadow_mapping.frag").c_str());
+    shadowMapShader = ShaderUtils::createShaderProgram(
+        std::string(SHADER_DIR) + "/shadow_mapping.vert",
+        std::string(SHADER_DIR) + "/shadow_mapping.frag"
+    );
 
     // Initialize shadow mapping
     initShadowMap();

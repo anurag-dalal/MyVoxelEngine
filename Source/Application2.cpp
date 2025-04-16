@@ -21,6 +21,7 @@
 #include "World/Voxel.h" // Include the Voxel header
 #include "Utils/ConfigReader.h"// Include the ConfigReader header
 #include "Utils/HeightMapGenerator.h"
+#include "Utils/ShaderUtils.h"
 #include "Models/Tree.h"
 #include "Sky/ogldev_cubemap_texture.h"
 
@@ -174,51 +175,7 @@ std::string loadShaderSource(const std::string& filePath) {
 }
 
 unsigned int createShaderProgram(const std::string& vertexPath, const std::string& fragmentPath) {
-    unsigned int vertexShader = 0;
-    unsigned int fragmentShader = 0;
-    unsigned int program = 0;
-    int success;
-    char infoLog[512];
-
-    // Load and compile vertex shader
-    std::string vertexCode = loadShaderSource(vertexPath);
-    const char* vShaderCode = vertexCode.c_str();
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vShaderCode, NULL);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // Load and compile fragment shader
-    std::string fragmentCode = loadShaderSource(fragmentPath);
-    const char* fShaderCode = fragmentCode.c_str();
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // Create and link shader program
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(program, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return program;
+    return ShaderUtils::createShaderProgram(vertexPath, fragmentPath);
 }
 
 int main()

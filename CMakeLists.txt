@@ -60,6 +60,8 @@ add_executable(${PROJECT_NAME}
                 Source/Utils/ConfigReader.cpp
                 Source/Utils/HeightMapGenerator.h
                 Source/Utils/HeightMapGenerator.cpp
+                Source/Utils/ShaderUtils.h
+                Source/Utils/ShaderUtils.cpp
                 Source/Models/Model.h
                 Source/Models/Tree.h
                 Source/Models/Tree.cpp
