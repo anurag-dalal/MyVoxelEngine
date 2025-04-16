@@ -22,6 +22,7 @@
 #include "Utils/ConfigReader.h"// Include the ConfigReader header
 #include "Utils/HeightMapGenerator.h"
 #include "Models/Tree.h"
+#include "Sky/ogldev_cubemap_texture.h"
 
 Config config = loadConfig(CONFIG_FILE);
 
@@ -106,6 +107,118 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     front.y = sin(glm::radians(pitch));
     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     cameraFront = glm::normalize(front);
+}
+
+// Add skybox variables
+unsigned int skyboxVAO, skyboxVBO;
+unsigned int skyboxShader;
+CubemapTexture* skyboxTexture;
+
+float skyboxVertices[] = {
+    // positions          
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+};
+
+// Add these function declarations at the top, outside main()
+std::string loadShaderSource(const std::string& filePath) {
+    std::ifstream shaderFile(filePath);
+    if (!shaderFile.is_open()) {
+        std::cerr << "Failed to open shader file: " << filePath << "\n";
+        return "";
+    }
+
+    std::stringstream shaderStream;
+    shaderStream << shaderFile.rdbuf();
+    shaderFile.close();
+    return shaderStream.str();
+}
+
+unsigned int createShaderProgram(const std::string& vertexPath, const std::string& fragmentPath) {
+    unsigned int vertexShader = 0;
+    unsigned int fragmentShader = 0;
+    unsigned int program = 0;
+    int success;
+    char infoLog[512];
+
+    // Load and compile vertex shader
+    std::string vertexCode = loadShaderSource(vertexPath);
+    const char* vShaderCode = vertexCode.c_str();
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vShaderCode, NULL);
+    glCompileShader(vertexShader);
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    // Load and compile fragment shader
+    std::string fragmentCode = loadShaderSource(fragmentPath);
+    const char* fShaderCode = fragmentCode.c_str();
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    // Create and link shader program
+    program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
 }
 
 int main()
@@ -289,6 +402,33 @@ int main()
     SystemUsage usage;
     SystemUsageAsync usageAsync;
     glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
+
+    // Initialize skybox
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    // Create and compile skybox shader
+    skyboxShader = createShaderProgram("Shaders/skybox.vert", "Shaders/skybox.frag");
+
+    // Load skybox textures
+    skyboxTexture = new CubemapTexture(
+        "Assets/Clouds/clearsky/px.png", // +X
+        "Assets/Clouds/clearsky/nx.png", // -X
+        "Assets/Clouds/clearsky/py.png", // +Y
+        "Assets/Clouds/clearsky/ny.png", // -Y
+        "Assets/Clouds/clearsky/pz.png", // +Z
+        "Assets/Clouds/clearsky/nz.png"  // -Z
+    );
+    if (!skyboxTexture->Load()) {
+        std::cerr << "Failed to load skybox textures!" << std::endl;
+        return -1;
+    }
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
@@ -304,7 +444,21 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
+
+        // Draw skybox first
+        glDepthFunc(GL_LEQUAL);
+        glUseProgram(skyboxShader);
+        // Remove translation from view matrix for skybox
+        glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "view"), 1, GL_FALSE, glm::value_ptr(skyboxView));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         
+        glBindVertexArray(skyboxVAO);
+        skyboxTexture->Bind(GL_TEXTURE0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS);
 
         // Render the voxels using the VoxelRenderer
         voxelRenderer.render(voxelsToRender, view, projection);
@@ -337,5 +491,11 @@ int main()
     ImGui::DestroyContext();
 
     glfwTerminate();
+
+    // Cleanup
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVBO);
+    delete skyboxTexture;
+
     return 0;
 }

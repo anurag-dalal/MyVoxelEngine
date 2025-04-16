@@ -63,6 +63,8 @@ add_executable(${PROJECT_NAME}
                 Source/Models/Model.h
                 Source/Models/Tree.h
                 Source/Models/Tree.cpp
+                Source/Sky/ogldev_cubemap_texture.h
+                Source/Sky/cubemap_texture.cpp
                 Source/World/Voxel.h
                 Source/World/Voxel.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
