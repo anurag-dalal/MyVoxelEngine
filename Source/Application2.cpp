@@ -116,7 +116,27 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Set up window
-    GLFWwindow *window = glfwCreateWindow(config.window.width, config.window.height, config.window.title.c_str(), NULL, NULL);
+    GLFWwindow *window;
+    if (config.fullscreen)
+    {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor(); // Get main monitor
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor); // Get resolution
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        // Create fullscreen window at monitor's resolution
+        window = glfwCreateWindow(mode->width, mode->height, "OpenGL Fullscreen", monitor, nullptr);
+        glfwSetWindowPos(window, 0, 0);
+        std::cout << mode->width << " " << mode->height << std::endl;
+
+    }
+    else
+    {
+        window = glfwCreateWindow(config.window.width, config.window.height, config.window.title.c_str(), NULL, NULL);
+        glfwSetWindowPos(window, 0, 0);
+    }
 
     if (window == NULL)
     {
@@ -152,15 +172,15 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    int width, height, nrChannels;
+    int tx_width, tx_height, nrChannels;
 
-    unsigned char *data = stbi_load((std::string(ASSETS_DIR) + "/atlas.png").c_str(), &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load((std::string(ASSETS_DIR) + "/atlas.png").c_str(), &tx_width, &tx_height, &nrChannels, 0);
     if (data)
     {
         if (nrChannels == 3)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tx_width, tx_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         else if (nrChannels == 4)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tx_width, tx_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         else
             std::cerr << "Error: Unsupported number of channels in texture\n";
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -172,7 +192,7 @@ int main()
     stbi_image_free(data);
 
     // Initialize the VoxelRenderer
-    VoxelRenderer voxelRenderer;
+    VoxelRenderer voxelRenderer(config);
     voxelRenderer.init();
     voxelRenderer.setTextureAtlas(texture);
 
@@ -187,9 +207,9 @@ int main()
     std::vector<std::unique_ptr<Model>> models;
     
     // Grid size
-    const int vox_width = 128;
-    const int vox_depth = 128;
-    const int vox_maxHeight = 64;
+    const int vox_width = config.gridConfig.vox_width;
+    const int vox_depth = config.gridConfig.vox_depth;
+    const int vox_maxHeight = config.gridConfig.vox_maxHeight;
     float voxelScale = config.voxelScale;
 
     // Store terrain heights for tree placement

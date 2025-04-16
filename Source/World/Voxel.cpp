@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-#include "../Utils/ConfigReader.h"
+
 #include <glm/gtc/matrix_transform.hpp>  // For glm::lookAt, glm::ortho
 #include <glm/gtx/transform.hpp>         // Additional transformation functions
 
@@ -11,61 +11,10 @@ glm::vec2 getUV(float x, float y) {
     return glm::vec2(x / 16.0f, y / 16.0f);
 }
 
-// Get config and set halfSize using voxelScale
-Config config2 = loadConfig(CONFIG_FILE);
-float halfSize = config2.voxelScale/2;
-float unitCubeVerticesWithAtlasUV[] = {
-    // Back face (-Z)
-    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
-     halfSize, -halfSize, -halfSize, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
-     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
-     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
-    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
-    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
 
-    // Front face (+Z)
-    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-     halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-     halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -halfSize,  halfSize,  halfSize, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-
-    // Left face (-X)
-    -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-    -halfSize, -halfSize,  halfSize, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-    -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-
-    // Right face (+X)
-    halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-    halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-
-    // Bottom face (-Y)
-    -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize, -halfSize, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-     halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-    -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-    -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-
-    // Top face (+Y)
-    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-     halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-    -halfSize,  halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-    -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-};
 
 // Constructor and Destructor
-VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0), depthMapFBO(0), depthMap(0), shadowMapShader(0) {
+VoxelRenderer::VoxelRenderer(Config& config) : shaderProgram(0), instanceVBO(0), VAO(0), textureAtlasId(0), depthMapFBO(0), depthMap(0), shadowMapShader(0), localconfig(config) {
     // Set up default block textures
     
     // Grass block (ID 1)
@@ -110,6 +59,59 @@ VoxelRenderer::VoxelRenderer() : shaderProgram(0), instanceVBO(0), VAO(0), textu
     waterBlock.top = waterBlock.bottom = waterBlock.front =
     waterBlock.back = waterBlock.left = waterBlock.right = glm::vec2(8, 0);  // All water
     blockTextures[7] = waterBlock;
+
+    // Set the configuration
+    localconfig = config;
+    float halfSize = localconfig.voxelScale / 2;
+    unitCubeVerticesWithAtlasUV = {
+        // Back face (-Z)
+        -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+        halfSize, -halfSize, -halfSize, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+        halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+        halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+        -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+        -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+
+        // Front face (+Z)
+        -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -halfSize,  halfSize,  halfSize, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+        // Left face (-X)
+        -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+        -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+        -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -halfSize, -halfSize, -halfSize, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -halfSize, -halfSize,  halfSize, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -halfSize,  halfSize,  halfSize, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+
+        // Right face (+X)
+        halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+        halfSize, -halfSize, -halfSize, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+        halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+        halfSize,  halfSize,  halfSize, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+
+        // Bottom face (-Y)
+        -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+        halfSize, -halfSize, -halfSize, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+        halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+        halfSize, -halfSize,  halfSize, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+        -halfSize, -halfSize,  halfSize, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+        -halfSize, -halfSize, -halfSize, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+
+        // Top face (+Y)
+        -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        halfSize,  halfSize, -halfSize, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        halfSize,  halfSize,  halfSize, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -halfSize,  halfSize,  halfSize, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -halfSize,  halfSize, -halfSize, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+    };
 }
 VoxelRenderer::~VoxelRenderer() {
     glDeleteProgram(shaderProgram);
@@ -235,7 +237,10 @@ void VoxelRenderer::init() {
     unsigned int cubeVBO;
     glGenBuffers(1, &cubeVBO);
     glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(unitCubeVerticesWithAtlasUV), unitCubeVerticesWithAtlasUV, GL_STATIC_DRAW);
+    // 8*6*6*4 = 1152 bytes
+    // 8 floats per vertex (3 for position, 2 for UV, 3 for normal)
+    // 6 faces, 6 vertices per face, 4 bytes per float
+    glBufferData(GL_ARRAY_BUFFER, 1152, &unitCubeVerticesWithAtlasUV[0], GL_STATIC_DRAW);
 
     // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
@@ -309,7 +314,7 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
     renderShadowMap(voxels);
     
     // Second render pass: render scene with shadows
-    glViewport(0, 0, 2560, 1600); // TODO: Get actual window dimensions
+    glViewport(0, 0, localconfig.window.width, localconfig.window.height); // TODO: Get actual window dimensions
     
     glUseProgram(shaderProgram);
 

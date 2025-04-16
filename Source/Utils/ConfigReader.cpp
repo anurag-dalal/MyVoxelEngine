@@ -25,8 +25,12 @@ Config loadConfig(const std::string& filename) {
     config.camera.pitch = j["camera"]["pitch"];
     config.camera.fov = j["camera"]["fov"];
 
+    config.gridConfig.vox_width = j["gridConfig"]["vox_width"];
+    config.gridConfig.vox_depth = j["gridConfig"]["vox_depth"];
+    config.gridConfig.vox_maxHeight = j["gridConfig"]["vox_maxHeight"];
+    
+    config.fullscreen = j["fullscreen"]["enabled"];
     config.performance.numSamples = j["performance"]["numSamples"];
-
     config.voxelScale = j["voxelScale"];
 
     return config;

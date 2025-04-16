@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../World/Voxel.h"
+#include "../Utils/ConfigReader.h"
 #include <vector>
 #include <glm/glm.hpp>
 

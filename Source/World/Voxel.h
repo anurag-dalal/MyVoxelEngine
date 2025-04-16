@@ -6,6 +6,8 @@
 #include <vector>
 #include <map>
 
+#include "../Utils/ConfigReader.h"
+
 // Declare camera position as extern
 extern glm::vec3 cameraPos;
 
@@ -27,7 +29,7 @@ struct Voxel {
 
 class VoxelRenderer {
 public:
-    VoxelRenderer();
+    VoxelRenderer(Config& config);
     ~VoxelRenderer();
 
     void init();
@@ -40,6 +42,7 @@ public:
     void setLightDir(const glm::vec3& dir) { lightDir = dir; }
     void setLightColor(const glm::vec3& color) { lightColor = color; }
     void setAmbientStrength(float strength) { ambientStrength = strength; }
+    Config& localconfig;
 
 private:
     unsigned int shaderProgram;
@@ -64,6 +67,8 @@ private:
     void initShadowMap();
     void renderShadowMap(const std::vector<Voxel>& voxels);
     unsigned int createShader(const char* vertexPath, const char* fragmentPath);
+
+    std::vector<float> unitCubeVerticesWithAtlasUV;
 };
 
 #endif // VOXEL_H

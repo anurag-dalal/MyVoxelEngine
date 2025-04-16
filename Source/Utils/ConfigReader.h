@@ -29,13 +29,19 @@ struct WindowConfig {
 struct PerformanceConfig {
     int numSamples;
 };
-
+struct GridConfig {
+    int vox_width;
+    int vox_depth;
+    int vox_maxHeight;
+};
 struct Config {
     WindowConfig window;
     TextureAtlasConfig textureAtlas;
     CameraConfig camera;
     PerformanceConfig performance;
+    GridConfig gridConfig;
     float voxelScale;
+    bool fullscreen;
 };
 
 // Declaration only
