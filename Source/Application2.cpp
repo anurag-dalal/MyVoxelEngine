@@ -294,9 +294,9 @@ int main()
     std::vector<std::vector<int>> terrainHeights(vox_width, std::vector<int>(vox_depth));
 
     // Noise scaling factors
-    float frequency = 0.005f;
+    float frequency = 0.008f;
     float amplitude = static_cast<float>(vox_maxHeight);
-    const int waterLevel = static_cast<int>(amplitude * 0.5f);
+    const int waterLevel = static_cast<int>(amplitude * 0.35f);
 
     // Generate terrain
     for (int x = 0; x < vox_width; ++x) {
@@ -311,6 +311,12 @@ int main()
                 glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
                 int blockId = (y == height) ? 1 : 2;
                 voxelsToRender.emplace_back(position, blockId);
+            }
+
+            // Fill water in the cavity if terrain is below water level
+            for (int y = height + 1; y <= waterLevel; ++y) {
+                glm::vec3 position(x * voxelScale, y * voxelScale, z * voxelScale);
+                voxelsToRender.emplace_back(position, 7); // Water blockId = 7
             }
         }
     }
@@ -327,6 +333,9 @@ int main()
             // Only place trees on grass blocks with some probability
             if (treeDist(gen) < treeDensity) {
                 int height = terrainHeights[x][z];
+
+                    // Don't place trees under water
+                    if (height <= waterLevel) continue;
                 
                 // Check if surrounding terrain is relatively flat (no more than 2 blocks difference)
                 bool canPlaceTree = true;
