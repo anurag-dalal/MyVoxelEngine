@@ -8,8 +8,8 @@
 
 #include "../Utils/ConfigReader.h"
 
-// Declare camera position as extern
-extern glm::vec3 cameraPos;
+// Remove the extern declaration
+// extern glm::vec3 cameraPos;
 
 struct BlockTexture {
     glm::vec2 top;
@@ -42,6 +42,7 @@ public:
     void setLightDir(const glm::vec3& dir) { lightDir = dir; }
     void setLightColor(const glm::vec3& color) { lightColor = color; }
     void setAmbientStrength(float strength) { ambientStrength = strength; }
+    void setCameraPosition(const glm::vec3& pos) { cameraPos = pos; }
     Config& localconfig;
 
 private:
@@ -62,6 +63,7 @@ private:
     glm::vec3 lightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     float ambientStrength = 0.4f;
+    glm::vec3 cameraPos; // Make cameraPos a member variable
     
     // Helper functions
     void initShadowMap();

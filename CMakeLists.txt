@@ -76,7 +76,9 @@ add_executable(${PROJECT_NAME}
                 Source/World/Chunk.h
                 Source/World/Chunk.cpp
                 Source/World/ChunkManager.h
-                Source/World/ChunkManager.cpp)
+                Source/World/ChunkManager.cpp
+                Source/Player/Player.h
+                Source/Player/Player.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/Shaders" ASSETS_DIR="${CMAKE_SOURCE_DIR}/Assets" CONFIG_FILE="${CMAKE_SOURCE_DIR}/Configs/config.json")
 # Link libraries
 target_link_libraries(${PROJECT_NAME}

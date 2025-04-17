@@ -26,6 +26,7 @@
 #include "Sky/ogldev_cubemap_texture.h"
 #include "World/Generation/BasicBiome.h"
 #include "World/ChunkManager.h" // Include the ChunkManager header
+#include "Player/Player.h" // Include the Player header
 
 Config config = loadConfig(CONFIG_FILE);
 
@@ -42,22 +43,27 @@ const int BLOCKS_PER_COL = config.textureAtlas.blocksPerCol;
 // Voxel scale
 const float VOXEL_SCALE = config.voxelScale;
 
-// Camera
-glm::vec3 cameraPos = config.camera.position;
-glm::vec3 cameraFront = config.camera.front;
-glm::vec3 cameraUp = config.camera.up;
-float yaw = config.camera.yaw;
-float pitch = config.camera.pitch;
+// Player
+Player* player = nullptr;
 
+// Mouse input
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+// Timing
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f;
 
 // Global chunk manager
 ChunkManager* chunkManager = nullptr;
+
+// Player movement states
+bool moveForward = false;
+bool moveBackward = false;
+bool moveLeft = false;
+bool moveRight = false;
+bool jumping = false;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -66,16 +72,26 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 void processInput(GLFWwindow *window)
 {
-    float cameraSpeed = 4.0f * deltaTime;
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    // Update key states
+    moveForward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+    moveBackward = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+    moveLeft = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+    moveRight = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+    
+    // Handle jumping
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping) {
+        player->jump();
+        jumping = true;
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+        jumping = false;
+    }
+    
+    // Spawn player at random location when R is pressed
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        player->spawnRandomly();
+    }
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -99,19 +115,13 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
+    // Update player's rotation
+    if (player) {
+        player->setRotation(
+            player->getYaw() + xoffset,
+            player->getPitch() + yoffset
+        );
+    }
 }
 
 // Add skybox variables
@@ -297,6 +307,11 @@ int main()
     // Initialize the ChunkManager
     chunkManager = new ChunkManager(config);
     chunkManager->init(biome);
+    
+    // Initialize the Player with the ChunkManager
+    player = new Player(chunkManager);
+    player->spawnRandomly();  // Start at a random spawn position
+    player->setCameraHeightOffset(0.85f);  // Set camera height 0.85 units above player position
 
     glEnable(GL_DEPTH_TEST);
     const int NUM_SAMPLES = config.performance.numSamples;;
@@ -304,7 +319,6 @@ int main()
     int frameIndex = 0;
     SystemUsage usage;
     SystemUsageAsync usageAsync;
-    glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
 
     // Initialize skybox
     glGenVertexArrays(1, &skyboxVAO);
@@ -359,14 +373,34 @@ int main()
             }
         }
 
+        // Process user input
         processInput(window);
+        
+        // Update player movement based on key states
+        if (moveForward)
+            player->moveForward(deltaTime);
+        if (moveBackward)
+            player->moveBackward(deltaTime);
+        if (moveLeft)
+            player->moveLeft(deltaTime);
+        if (moveRight)
+            player->moveRight(deltaTime);
+        
+        // Update player physics
+        player->update(deltaTime);
+        
+        // Get player position for camera view and chunk loading
+        glm::vec3 playerPos = player->getPosition();
+        
+        // Pass camera position to voxel renderer for shadow calculations
+        voxelRenderer.setCameraPosition(playerPos);
 
         // Blue background
         glClearColor(0.2f, 0.3f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Update chunk loading based on camera position
-        chunkManager->updateChunks(cameraPos);
+        // Update chunk loading based on player position
+        chunkManager->updateChunks(playerPos);
         
         // Get all visible voxels from loaded chunks
         std::vector<Voxel> voxelsToRender = chunkManager->getVisibleVoxels();
@@ -375,8 +409,10 @@ int main()
         chunksLoaded = 0;
         totalVoxels = voxelsToRender.size();
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
+        // Get view matrix from player
+        glm::mat4 view = player->getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(config.camera.fov), 
+                                               (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
 
         // Draw skybox first
         glDepthFunc(GL_LEQUAL);
@@ -395,6 +431,7 @@ int main()
         // Render the voxels using the VoxelRenderer
         voxelRenderer.render(voxelsToRender, view, projection);
 
+        // GUI
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::GetIO().FontGlobalScale = 2.5f;
@@ -412,6 +449,14 @@ int main()
         ImGui::Separator();
         ImGui::Text("Chunks: %d", chunksLoaded);
         ImGui::Text("Voxels: %d", totalVoxels);
+        ImGui::Separator();
+        
+        // Player information
+        ImGui::Text("Player Position: (%.1f, %.1f, %.1f)", 
+                   playerPos.x, playerPos.y, playerPos.z);
+        ImGui::Text("On Ground: %s", player->isOnGround() ? "Yes" : "No");
+        ImGui::Text("Controls: WASD to move, Space to jump, R to respawn");
+        
         ImGui::End();
 
         ImGui::Render();
@@ -425,17 +470,14 @@ int main()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    // Clean up chunk manager
-    if (chunkManager) {
-        delete chunkManager;
-    }
-
-    glfwTerminate();
-
-    // Cleanup
+    // Clean up
+    delete player;
+    delete chunkManager;
+    delete skyboxTexture;
+    
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1, &skyboxVBO);
-    delete skyboxTexture;
 
+    glfwTerminate();
     return 0;
 }
