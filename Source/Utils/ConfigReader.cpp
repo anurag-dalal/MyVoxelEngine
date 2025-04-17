@@ -36,6 +36,18 @@ Config loadConfig(const std::string& filename) {
     config.performance.vsync = j["performance"]["vsync"];
     config.performance.targetFPS = j["performance"]["targetFPS"];
     
+    // Parse world configuration if it exists
+    if (j.contains("world")) {
+        config.world.defaultBiome = j["world"]["defaultBiome"];
+        config.world.biomeBlendFactor = j["world"]["biomeBlendFactor"];
+        config.world.forceBiome = j["world"]["forceBiome"];
+    } else {
+        // Default values if not in config file
+        config.world.defaultBiome = "PLAINS";
+        config.world.biomeBlendFactor = 0.5f;
+        config.world.forceBiome = false;
+    }
+    
     config.voxelScale = j["voxelScale"];
     config.skyname = j["skyname"];
 

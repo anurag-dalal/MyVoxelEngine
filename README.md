@@ -21,3 +21,10 @@ Images: https://polyhaven.com/hdris/skies
 Convert hdr to png: https://convertio.co/hdr-png/
 Png to Cubemap: https://jaxry.github.io/panorama-to-cubemap/
 
+"PLAINS"
+"FOREST"
+"DESERT"
+"MOUNTAINS"
+"SNOWY_PLAINS"
+"LAKE"
+"ALPINE"

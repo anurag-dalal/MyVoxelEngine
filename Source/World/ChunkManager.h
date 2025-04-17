@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <vector>
 #include <glm/glm.hpp>
 #include "Chunk.h"
 #include "../Utils/ConfigReader.h"
@@ -16,13 +17,37 @@ struct ChunkCoordHash {
     }
 };
 
+// Enum for biome types
+enum class BiomeType {
+    PLAINS,
+    FOREST,
+    DESERT,
+    MOUNTAINS,
+    SNOWY_PLAINS,
+    LAKE,
+    ALPINE
+};
+
+// Struct for biome blending weight
+struct BiomeBlend {
+    BiomeType type;
+    float weight; // 0.0 to 1.0
+};
+
 class ChunkManager {
 public:
     ChunkManager(Config& config);
     ~ChunkManager() = default;
     
-    // Initialize the chunk manager with a biome for terrain generation
-    void init(Biome& biome);
+    // Initialize the chunk manager with biomes for terrain generation
+    void init(Biome& defaultBiome);
+    void addBiome(BiomeType type, Biome* biome);
+    
+    // Biome control methods
+    void setForcedBiome(BiomeType biomeType);
+    void clearForcedBiome();
+    BiomeType getCurrentBiomeAt(const glm::vec3& worldPos) const;
+    void setBiomeBlendFactor(float factor); // 0.0 = sharp transitions, 1.0 = maximum blending
     
     // Chunk operations
     void loadChunk(int chunkX, int chunkZ);
@@ -51,6 +76,9 @@ public:
     
     // Terrain generation methods
     void generateTerrainForChunk(int chunkX, int chunkZ);
+    
+    // Regenerate terrain for a chunk with a specific biome
+    void regenerateChunk(int chunkX, int chunkZ);
 
 private:
     // Map of loaded chunks
@@ -65,12 +93,20 @@ private:
     // Voxel scale
     float voxelScale;
     
-    // Biome reference for terrain generation
-    Biome* biome = nullptr;
+    // Biome references for terrain generation
+    std::unordered_map<BiomeType, Biome*> biomes;
+    Biome* defaultBiome = nullptr;
+    
+    // Biome control
+    bool isBiomeForced = false;
+    BiomeType forcedBiomeType = BiomeType::PLAINS;
+    float biomeBlendFactor = 0.5f;
     
     // Helper methods
     void updateChunkMeshes();
     void generateHeightmapForChunk(int chunkX, int chunkZ, std::vector<std::vector<int>>& heightMap) const;
+    BiomeType getBiomeTypeForChunk(int chunkX, int chunkZ) const;
+    std::vector<BiomeBlend> getBlendedBiomes(int chunkX, int chunkZ) const;
 };
 
 #endif // CHUNK_MANAGER_H

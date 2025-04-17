@@ -47,6 +47,11 @@ include_directories(
 # Add the JSON library include path
 include_directories(${CMAKE_SOURCE_DIR}/Include/json/include)
 
+# Collect biome header files
+file(GLOB BIOME_HEADERS 
+    ${CMAKE_SOURCE_DIR}/Source/World/Generation/Biomes/*.h
+)
+
 # Source files
 add_executable(${PROJECT_NAME} 
     Source/Application2.cpp
@@ -68,6 +73,7 @@ add_executable(${PROJECT_NAME}
     Source/World/Generation/Biome.cpp
     Source/World/Generation/BasicBiome.h
     Source/World/Generation/BasicBiome.cpp
+    ${BIOME_HEADERS}
     Source/World/Chunk.h
     Source/World/Chunk.cpp
     Source/World/ChunkManager.h

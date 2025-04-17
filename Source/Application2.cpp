@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -25,6 +26,11 @@
 #include "Models/Tree.h"
 #include "Sky/ogldev_cubemap_texture.h"
 #include "World/Generation/BasicBiome.h"
+#include "World/Generation/Biomes/ForestBiome.h"
+#include "World/Generation/Biomes/DesertBiome.h"
+#include "World/Generation/Biomes/MountainBiome.h"
+#include "World/Generation/Biomes/SnowyBiome.h"
+#include "World/Generation/Biomes/AlpineBiome.h"
 #include "World/ChunkManager.h" // Include the ChunkManager header
 #include "Player/Player.h" // Include the Player header
 #include "Player/PlayerController.h" // Include the PlayerController header
@@ -35,6 +41,41 @@
 
 Config config = loadConfig(CONFIG_FILE);
 PlayerConfig playerConfig = loadPlayerConfig(PLAYER_CONFIG_FILE);
+
+// Biome control variables
+bool isBiomeForced = false;
+BiomeType forcedBiomeType = BiomeType::PLAINS;
+float biomeBlendFactor = 0.5f;
+bool showBiomeWindow = false;
+
+// Helper function to convert BiomeType to string for display
+std::string getBiomeTypeName(BiomeType type) {
+    switch (type) {
+        case BiomeType::PLAINS:      return "Plains";
+        case BiomeType::FOREST:      return "Forest";
+        case BiomeType::DESERT:      return "Desert";
+        case BiomeType::MOUNTAINS:   return "Mountains";
+        case BiomeType::SNOWY_PLAINS: return "Snowy Plains";
+        case BiomeType::LAKE:        return "Lake";
+        case BiomeType::ALPINE:      return "Alpine";
+        default:                     return "Unknown";
+    }
+}
+
+// Helper function to convert string to BiomeType
+BiomeType getBiomeTypeFromString(const std::string& biomeStr) {
+    if (biomeStr == "PLAINS") return BiomeType::PLAINS;
+    if (biomeStr == "FOREST") return BiomeType::FOREST;
+    if (biomeStr == "DESERT") return BiomeType::DESERT;
+    if (biomeStr == "MOUNTAINS") return BiomeType::MOUNTAINS;
+    if (biomeStr == "SNOWY_PLAINS") return BiomeType::SNOWY_PLAINS;
+    if (biomeStr == "LAKE") return BiomeType::LAKE;
+    if (biomeStr == "ALPINE") return BiomeType::ALPINE;
+    
+    // Return PLAINS as default if string doesn't match
+    std::cerr << "Warning: Unknown biome type '" << biomeStr << "', defaulting to PLAINS" << std::endl;
+    return BiomeType::PLAINS;
+}
 
 // Window size
 const unsigned int SCR_WIDTH = config.window.width;
@@ -83,6 +124,54 @@ void processInput(GLFWwindow *window)
     // Keep escape key handling in main application
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    
+    // Toggle biome control window with B key
+    static bool bKeyPressed = false;
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+        if (!bKeyPressed) {
+            showBiomeWindow = !showBiomeWindow;
+            bKeyPressed = true;
+            
+            // Toggle mouse cursor for UI control
+            if (showBiomeWindow) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            } else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
+        }
+    } else {
+        bKeyPressed = false;
+    }
+    
+    // Toggle forced biome with F key
+    static bool fKeyPressed = false;
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        if (!fKeyPressed) {
+            isBiomeForced = !isBiomeForced;
+            if (isBiomeForced) {
+                // Apply the forced biome to the chunk manager
+                chunkManager->setForcedBiome(forcedBiomeType);
+                std::cout << "Forced biome mode enabled: " << getBiomeTypeName(forcedBiomeType) << std::endl;
+            } else {
+                // Clear forced biome
+                chunkManager->clearForcedBiome();
+                std::cout << "Forced biome mode disabled, natural biome generation restored" << std::endl;
+            }
+            fKeyPressed = true;
+        }
+    } else {
+        fKeyPressed = false;
+    }
+    
+    // Adjust biome blend factor with [ and ] keys
+    if (glfwGetKey(window, GLFW_KEY_LEFT_BRACKET) == GLFW_PRESS) {
+        biomeBlendFactor = std::max(0.0f, biomeBlendFactor - 0.01f);
+        chunkManager->setBiomeBlendFactor(biomeBlendFactor);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT_BRACKET) == GLFW_PRESS) {
+        biomeBlendFactor = std::min(1.0f, biomeBlendFactor + 0.01f);
+        chunkManager->setBiomeBlendFactor(biomeBlendFactor);
+    }
 }
 
 // Forward mouse movement to the player controller
@@ -269,16 +358,71 @@ int main()
     voxelRenderer.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
     voxelRenderer.setAmbientStrength(0.4f);
 
-    // Create and setup the biome
-    BasicBiome biome(config);
-    biome.setTextureAtlas(texture);
-    biome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
-    biome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
-    biome.setAmbientStrength(0.4f);
+    // Create and setup the biomes
+    BasicBiome plainsBiome(config);
+    plainsBiome.setTextureAtlas(texture);
+    plainsBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    plainsBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    plainsBiome.setAmbientStrength(0.4f);
+
+    ForestBiome forestBiome(config);
+    forestBiome.setTextureAtlas(texture);
+    forestBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    forestBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    forestBiome.setAmbientStrength(0.4f);
+
+    DesertBiome desertBiome(config);
+    desertBiome.setTextureAtlas(texture);
+    desertBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    desertBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    desertBiome.setAmbientStrength(0.4f);
+
+    MountainBiome mountainBiome(config);
+    mountainBiome.setTextureAtlas(texture);
+    mountainBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    mountainBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    mountainBiome.setAmbientStrength(0.4f);
+
+    SnowyBiome snowyBiome(config);
+    snowyBiome.setTextureAtlas(texture);
+    snowyBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    snowyBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    snowyBiome.setAmbientStrength(0.4f);
+
+    AlpineBiome alpineBiome(config);
+    alpineBiome.setTextureAtlas(texture);
+    alpineBiome.setLightDir(glm::vec3(-0.2f, -1.0f, -0.3f));
+    alpineBiome.setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+    alpineBiome.setAmbientStrength(0.4f);
 
     // Initialize the ChunkManager
     chunkManager = new ChunkManager(config);
-    chunkManager->init(biome);
+    chunkManager->init(plainsBiome);
+    
+    // Register all biomes with the ChunkManager
+    chunkManager->addBiome(BiomeType::FOREST, &forestBiome);
+    chunkManager->addBiome(BiomeType::DESERT, &desertBiome);
+    chunkManager->addBiome(BiomeType::MOUNTAINS, &mountainBiome);
+    chunkManager->addBiome(BiomeType::SNOWY_PLAINS, &snowyBiome);
+    chunkManager->addBiome(BiomeType::ALPINE, &alpineBiome);
+    
+    // Apply world biome settings from config.json
+    if (config.world.forceBiome) {
+        // Convert string biome name to BiomeType enum
+        BiomeType configBiomeType = getBiomeTypeFromString(config.world.defaultBiome);
+        
+        // Set global biome variables to match config
+        forcedBiomeType = configBiomeType;
+        isBiomeForced = true;
+        biomeBlendFactor = config.world.biomeBlendFactor;
+        
+        // Apply settings to chunk manager
+        chunkManager->setForcedBiome(forcedBiomeType);
+        chunkManager->setBiomeBlendFactor(biomeBlendFactor);
+        
+        std::cout << "World set to forced biome: " << getBiomeTypeName(forcedBiomeType) 
+                  << " (Blend Factor: " << biomeBlendFactor << ")" << std::endl;
+    }
     
     // Initialize the Player with the ChunkManager
     player = new Player(chunkManager, playerConfig.physics.height, playerConfig.physics.width);
@@ -430,7 +574,99 @@ int main()
                    playerConfig.controls.keyboard.moveRight - GLFW_KEY_A + 'A');
         ImGui::Text("Jump: Space, Sprint: LShift, Respawn: R");
         
+        // Get current chunk coordinates
+        int chunkX, chunkZ;
+        chunkManager->worldToChunkCoords(playerPos, chunkX, chunkZ);
+        
+        // Display current chunk and biome information
+        ImGui::Text("Current Chunk: (%d, %d)", chunkX, chunkZ);
+        
         ImGui::End();
+        
+        // Biome control window
+        if (showBiomeWindow) {
+            ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowPos(ImVec2(SCR_WIDTH - 420, 20), ImGuiCond_FirstUseEver);
+            ImGui::Begin("Biome Control", &showBiomeWindow);
+            
+            // Display current biome information
+            BiomeType currentBiome = chunkManager->getCurrentBiomeAt(playerPos);
+            ImGui::Text("Current Biome: %s", getBiomeTypeName(currentBiome).c_str());
+            
+            // Toggle forced biome mode
+            if (ImGui::Checkbox("Force Biome", &isBiomeForced)) {
+                if (isBiomeForced) {
+                    chunkManager->setForcedBiome(forcedBiomeType);
+                } else {
+                    chunkManager->clearForcedBiome();
+                }
+            }
+            
+            ImGui::Separator();
+            ImGui::Text("Select Biome:");
+            
+            // Radio buttons for biome selection
+            static int selectedBiome = static_cast<int>(forcedBiomeType);
+            if (ImGui::RadioButton("Plains", &selectedBiome, static_cast<int>(BiomeType::PLAINS))) {
+                forcedBiomeType = BiomeType::PLAINS;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Forest", &selectedBiome, static_cast<int>(BiomeType::FOREST))) {
+                forcedBiomeType = BiomeType::FOREST;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Desert", &selectedBiome, static_cast<int>(BiomeType::DESERT))) {
+                forcedBiomeType = BiomeType::DESERT;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Mountains", &selectedBiome, static_cast<int>(BiomeType::MOUNTAINS))) {
+                forcedBiomeType = BiomeType::MOUNTAINS;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Snowy Plains", &selectedBiome, static_cast<int>(BiomeType::SNOWY_PLAINS))) {
+                forcedBiomeType = BiomeType::SNOWY_PLAINS;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Alpine", &selectedBiome, static_cast<int>(BiomeType::ALPINE))) {
+                forcedBiomeType = BiomeType::ALPINE;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            if (ImGui::RadioButton("Lake", &selectedBiome, static_cast<int>(BiomeType::LAKE))) {
+                forcedBiomeType = BiomeType::LAKE;
+                if (isBiomeForced) chunkManager->setForcedBiome(forcedBiomeType);
+            }
+            
+            ImGui::Separator();
+            
+            // Biome blend factor slider
+            if (ImGui::SliderFloat("Biome Blend Factor", &biomeBlendFactor, 0.0f, 1.0f)) {
+                chunkManager->setBiomeBlendFactor(biomeBlendFactor);
+            }
+            
+            ImGui::Separator();
+            
+            // Regenerate chunk button
+            if (ImGui::Button("Regenerate Current Chunks")) {
+                int chunkX, chunkZ;
+                chunkManager->worldToChunkCoords(playerPos, chunkX, chunkZ);
+                
+                // Regenerate current chunk and neighbors
+                for (int dx = -2; dx <= 2; dx++) {
+                    for (int dz = -2; dz <= 2; dz++) {
+                        chunkManager->regenerateChunk(chunkX + dx, chunkZ + dz);
+                    }
+                }
+            }
+            
+            // Display controls help
+            ImGui::Separator();
+            ImGui::Text("Biome Controls:");
+            ImGui::Text("F - Toggle forced biome");
+            ImGui::Text("[ ] - Adjust blend factor");
+            ImGui::Text("B - Toggle this window");
+            
+            ImGui::End();
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

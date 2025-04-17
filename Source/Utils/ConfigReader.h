@@ -43,6 +43,12 @@ struct FullscreenConfig {
     bool borderless;
 };
 
+struct WorldConfig {
+    std::string defaultBiome;
+    float biomeBlendFactor;
+    bool forceBiome;
+};
+
 struct Config {
     WindowConfig window;
     TextureAtlasConfig textureAtlas;
@@ -52,6 +58,7 @@ struct Config {
     float voxelScale;
     FullscreenConfig fullscreen;
     std::string skyname;
+    WorldConfig world;
 };
 
 // Declaration only

@@ -33,6 +33,11 @@
     "vsync": true,
     "targetFPS": 60
   },
+  "world": {
+    "defaultBiome": "FOREST",
+    "biomeBlendFactor": 0.5,
+    "forceBiome": true
+  },
   "voxelScale": 0.5,
   "skyname": "clearsky"
 }
