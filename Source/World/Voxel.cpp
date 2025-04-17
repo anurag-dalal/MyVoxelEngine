@@ -271,14 +271,25 @@ void VoxelRenderer::render(const std::vector<Voxel>& voxels, const glm::mat4& vi
     renderShadowMap(voxels);
     
     // Second render pass: render scene with shadows
-    glViewport(0, 0, localconfig.window.width, localconfig.window.height); // TODO: Get actual window dimensions
+    glViewport(0, 0, localconfig.window.width, localconfig.window.height);
     
     glUseProgram(shaderProgram);
 
-    // Calculate light space matrix (same as in renderShadowMap)
-    float near_plane = 1.0f, far_plane = 100.0f;
-    glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
-    glm::mat4 lightView = glm::lookAt(-lightDir * 30.0f, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    // Calculate light space matrix - EXACTLY the same as in renderShadowMap
+    float near_plane = 1.0f, far_plane = 200.0f;
+    float shadowSize = 80.0f;
+    glm::mat4 lightProjection = glm::ortho(-shadowSize, shadowSize, -shadowSize, shadowSize, near_plane, far_plane);
+    
+    // Position light relative to camera to follow player through the world
+    glm::vec3 lightTarget = glm::vec3(cameraPos.x, 0.0f, cameraPos.z);
+    glm::vec3 lightPos = lightTarget - (lightDir * 80.0f);
+    lightPos.y = 70.0f;
+    
+    glm::mat4 lightView = glm::lookAt(
+        lightPos,
+        lightTarget,
+        glm::vec3(0.0, 1.0, 0.0)
+    );
     glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
     // Set uniforms

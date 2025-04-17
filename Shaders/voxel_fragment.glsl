@@ -21,25 +21,35 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
     // Transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
     
+    // Check if fragment is beyond shadow map bounds
+    if(projCoords.x < 0.0 || projCoords.x > 1.0 || 
+       projCoords.y < 0.0 || projCoords.y > 1.0 ||
+       projCoords.z < 0.0 || projCoords.z > 1.0) {
+        return 0.0; // No shadow outside bounds
+    }
+    
     // Get closest depth value from light's perspective
     float closestDepth = texture(shadowMap, projCoords.xy).r;
     
     // Get current depth
     float currentDepth = projCoords.z;
     
-    // Add bias to prevent shadow acne
-    float bias = max(0.05 * (1.0 - dot(Normal, -normalize(lightDir))), 0.005);
+    // Calculate bias based on surface angle relative to light
+    float bias = max(0.025 * (1.0 - dot(Normal, -normalize(lightDir))), 0.0025);
     
-    // PCF (Percentage Closer Filtering)
+    // PCF (Percentage Closer Filtering) with larger kernel for softer shadows
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(int x = -1; x <= 1; ++x) {
-        for(int y = -1; y <= 1; ++y) {
+    int pcfRadius = 2; // Larger radius for softer shadows
+    
+    for(int x = -pcfRadius; x <= pcfRadius; ++x) {
+        for(int y = -pcfRadius; y <= pcfRadius; ++y) {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0;
+    
+    shadow /= ((2 * pcfRadius + 1) * (2 * pcfRadius + 1)); // Average over kernel size
     
     // Keep the shadow at 0.0 when outside the light's far plane
     if(projCoords.z > 1.0)

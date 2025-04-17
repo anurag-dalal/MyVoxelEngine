@@ -33,6 +33,6 @@
     "vsync": true,
     "targetFPS": 60
   },
-  "voxelScale": 0.08,
+  "voxelScale": 0.5,
   "skyname": "clearsky"
 }
