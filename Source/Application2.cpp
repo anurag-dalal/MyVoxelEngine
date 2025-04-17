@@ -27,8 +27,14 @@
 #include "World/Generation/BasicBiome.h"
 #include "World/ChunkManager.h" // Include the ChunkManager header
 #include "Player/Player.h" // Include the Player header
+#include "Player/PlayerController.h" // Include the PlayerController header
+#include "Player/PlayerConfigReader.h" // Include the PlayerConfigReader header
+
+// Define path for player config file
+#define PLAYER_CONFIG_FILE std::string(CONFIG_FILE).substr(0, std::string(CONFIG_FILE).find_last_of('/') + 1) + "player_config.json"
 
 Config config = loadConfig(CONFIG_FILE);
+PlayerConfig playerConfig = loadPlayerConfig(PLAYER_CONFIG_FILE);
 
 // Window size
 const unsigned int SCR_WIDTH = config.window.width;
@@ -43,10 +49,11 @@ const int BLOCKS_PER_COL = config.textureAtlas.blocksPerCol;
 // Voxel scale
 const float VOXEL_SCALE = config.voxelScale;
 
-// Player
+// Player and controller
 Player* player = nullptr;
+PlayerController* playerController = nullptr;
 
-// Mouse input
+// Mouse handling (will be managed by PlayerController)
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -58,69 +65,31 @@ float lastFrame = 0.0f;
 // Global chunk manager
 ChunkManager* chunkManager = nullptr;
 
-// Player movement states
-bool moveForward = false;
-bool moveBackward = false;
-bool moveLeft = false;
-bool moveRight = false;
-bool jumping = false;
+// For camera position used by VoxelRenderer
+glm::vec3 cameraPos = glm::vec3(0.0f);
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
+// Forward input handling to the player controller
 void processInput(GLFWwindow *window)
 {
-    // Update key states
-    moveForward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
-    moveBackward = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-    moveLeft = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-    moveRight = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
-    
-    // Handle jumping
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping) {
-        player->jump();
-        jumping = true;
-    }
-    
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-        jumping = false;
-    }
-    
-    // Spawn player at random location when R is pressed
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        player->spawnRandomly();
+    if (playerController) {
+        playerController->processKeyboardInput(deltaTime);
     }
 
+    // Keep escape key handling in main application
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
 
+// Forward mouse movement to the player controller
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
-    if (firstMouse)
-    {
-        lastX = (float)xpos;
-        lastY = (float)ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = (float)(xpos - lastX);
-    float yoffset = (float)(lastY - ypos); // reversed
-    lastX = (float)xpos;
-    lastY = (float)ypos;
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    // Update player's rotation
-    if (player) {
-        player->setRotation(
-            player->getYaw() + xoffset,
-            player->getPitch() + yoffset
-        );
+    if (playerController) {
+        playerController->processMouseMovement(xpos, ypos);
     }
 }
 
@@ -194,6 +163,9 @@ unsigned int createShaderProgram(const std::string& vertexPath, const std::strin
 
 int main()
 {
+    std::cout << "Loading configuration from: " << CONFIG_FILE << std::endl;
+    std::cout << "Loading player configuration from: " << PLAYER_CONFIG_FILE << std::endl;
+    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -309,9 +281,14 @@ int main()
     chunkManager->init(biome);
     
     // Initialize the Player with the ChunkManager
-    player = new Player(chunkManager);
-    player->spawnRandomly();  // Start at a random spawn position
-    player->setCameraHeightOffset(0.85f);  // Set camera height 0.85 units above player position
+    player = new Player(chunkManager, playerConfig.physics.height, playerConfig.physics.width);
+    
+    // Initialize the PlayerController
+    playerController = new PlayerController(player, window);
+    playerController->init(playerConfig);
+    
+    // Start player at a random spawn position
+    player->spawnRandomly();
 
     glEnable(GL_DEPTH_TEST);
     const int NUM_SAMPLES = config.performance.numSamples;;
@@ -376,24 +353,12 @@ int main()
         // Process user input
         processInput(window);
         
-        // Update player movement based on key states
-        if (moveForward)
-            player->moveForward(deltaTime);
-        if (moveBackward)
-            player->moveBackward(deltaTime);
-        if (moveLeft)
-            player->moveLeft(deltaTime);
-        if (moveRight)
-            player->moveRight(deltaTime);
-        
-        // Update player physics
-        player->update(deltaTime);
-        
         // Get player position for camera view and chunk loading
         glm::vec3 playerPos = player->getPosition();
+        cameraPos = playerPos + glm::vec3(0.0f, player->getCameraHeightOffset(), 0.0f);
         
         // Pass camera position to voxel renderer for shadow calculations
-        voxelRenderer.setCameraPosition(playerPos);
+        voxelRenderer.setCameraPosition(cameraPos);
 
         // Blue background
         glClearColor(0.2f, 0.3f, 1.0f, 1.0f);
@@ -455,7 +420,15 @@ int main()
         ImGui::Text("Player Position: (%.1f, %.1f, %.1f)", 
                    playerPos.x, playerPos.y, playerPos.z);
         ImGui::Text("On Ground: %s", player->isOnGround() ? "Yes" : "No");
-        ImGui::Text("Controls: WASD to move, Space to jump, R to respawn");
+        
+        // Display controls from config
+        ImGui::Text("Controls:");
+        ImGui::Text("Move: %c/%c/%c/%c", 
+                   playerConfig.controls.keyboard.moveForward - GLFW_KEY_A + 'A',
+                   playerConfig.controls.keyboard.moveLeft - GLFW_KEY_A + 'A',
+                   playerConfig.controls.keyboard.moveBackward - GLFW_KEY_A + 'A',
+                   playerConfig.controls.keyboard.moveRight - GLFW_KEY_A + 'A');
+        ImGui::Text("Jump: Space, Sprint: LShift, Respawn: R");
         
         ImGui::End();
 
@@ -471,6 +444,7 @@ int main()
     ImGui::DestroyContext();
 
     // Clean up
+    delete playerController;
     delete player;
     delete chunkManager;
     delete skyboxTexture;

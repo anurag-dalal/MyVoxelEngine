@@ -33,9 +33,18 @@ public:
     glm::vec3 getFrontVector() const;
     glm::vec3 getUpVector() const;
     
-    // Add camera height offset
+    // Camera height offset
     void setCameraHeightOffset(float offset) { cameraHeightOffset = offset; }
     float getCameraHeightOffset() const { return cameraHeightOffset; }
+    
+    // Physics properties setters
+    void setGravity(float value) { gravity = value; }
+    void setJumpForce(float value) { jumpForce = value; }
+    void setMoveSpeed(float value) { moveSpeed = value; }
+    void setTerminalVelocity(float value) { terminalVelocity = value; }
+    void setAcceleration(float value) { acceleration = value; }
+    void setDeceleration(float value) { deceleration = value; }
+    void setPlayerDimensions(float height, float width) { this->height = height; this->width = width; }
     
     // Spawn at a random valid location
     void spawnRandomly(int maxAttempts = 100);
@@ -57,6 +66,9 @@ private:
     
     // Movement properties
     float moveSpeed;
+    float acceleration;
+    float deceleration;
+    float terminalVelocity;
     
     // Player dimensions
     float height;
@@ -71,7 +83,7 @@ private:
     glm::vec3 up;
     
     // Camera height offset (distance above player position)
-    float cameraHeightOffset = 0.0f;
+    float cameraHeightOffset;
     
     // Recalculate the front, right and up vectors based on yaw and pitch
     void updateVectors();

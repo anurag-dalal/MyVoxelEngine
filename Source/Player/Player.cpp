@@ -13,8 +13,12 @@ Player::Player(ChunkManager* chunkManager, float playerHeight, float playerWidth
       jumpForce(8.0f),
       onGround(false),
       moveSpeed(5.0f),
+      acceleration(30.0f),
+      deceleration(15.0f),
+      terminalVelocity(-30.0f),
       height(playerHeight),
       width(playerWidth),
+      cameraHeightOffset(0.85f),
       front(0.0f, 0.0f, -1.0f),
       right(1.0f, 0.0f, 0.0f),
       up(0.0f, 1.0f, 0.0f)
@@ -237,7 +241,6 @@ void Player::applyGravity(float deltaTime) {
         velocity.y -= gravity * deltaTime;
         
         // Terminal velocity
-        const float terminalVelocity = -30.0f;
         velocity.y = std::max(velocity.y, terminalVelocity);
     }
 }

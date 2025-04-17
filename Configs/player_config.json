@@ -1,0 +1,29 @@
+{
+    "physics": {
+        "height": 1.8,
+        "width": 0.6,
+        "cameraHeightOffset": 0.85,
+        "gravity": 20.0,
+        "jumpForce": 8.0,
+        "moveSpeed": 5.0,
+        "acceleration": 30.0,
+        "deceleration": 15.0,
+        "terminalVelocity": -30.0
+    },
+    "controls": {
+        "keyboard": {
+            "moveForward": "W",
+            "moveBackward": "S",
+            "moveLeft": "A", 
+            "moveRight": "D",
+            "jump": "SPACE",
+            "sprint": "LEFT_SHIFT",
+            "respawn": "R"
+        },
+        "mouse": {
+            "sensitivity": 0.1,
+            "invertY": false,
+            "maxPitch": 89.0
+        }
+    }
+}
