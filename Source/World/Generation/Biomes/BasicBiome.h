@@ -2,7 +2,7 @@
 
 #include "Biome.h"
 #include <random>
-#include "../../Models/Tree.h"
+#include "../../../Models/Tree.h"
 #include <memory>
 
 class BasicBiome : public Biome {

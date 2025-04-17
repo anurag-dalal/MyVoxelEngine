@@ -8,7 +8,7 @@
 #include "Chunk.h"
 #include "../Utils/ConfigReader.h"
 #include "Voxel.h"
-#include "Generation/Biome.h"
+#include "Generation/Biomes/Biome.h"
 
 // Hash function for chunk coordinates
 struct ChunkCoordHash {

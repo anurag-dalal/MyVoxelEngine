@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Biome.h"
+#include "Biome.h"
 #include <random>
 #include "../../../Models/Tree.h"
 #include <memory>

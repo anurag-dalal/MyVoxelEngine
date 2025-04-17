@@ -2,8 +2,8 @@
 
 #include <glm/glm.hpp>
 #include <vector>
-#include "../Voxel.h"
-#include "../../Utils/ConfigReader.h"
+#include "../../Voxel.h"
+#include "../../../Utils/ConfigReader.h"
 
 class Biome {
 protected:

@@ -34,7 +34,7 @@
     "targetFPS": 60
   },
   "world": {
-    "defaultBiome": "FOREST",
+    "defaultBiome": "PLAINS",
     "biomeBlendFactor": 0.5,
     "forceBiome": true
   },

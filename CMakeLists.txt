@@ -69,10 +69,10 @@ add_executable(${PROJECT_NAME}
     Source/Sky/cubemap_texture.cpp
     Source/World/Voxel.h
     Source/World/Voxel.cpp
-    Source/World/Generation/Biome.h
-    Source/World/Generation/Biome.cpp
-    Source/World/Generation/BasicBiome.h
-    Source/World/Generation/BasicBiome.cpp
+    Source/World/Generation/Biomes/Biome.h
+    Source/World/Generation/Biomes/Biome.cpp
+    Source/World/Generation/Biomes/BasicBiome.h
+    Source/World/Generation/Biomes/BasicBiome.cpp
     ${BIOME_HEADERS}
     Source/World/Chunk.h
     Source/World/Chunk.cpp

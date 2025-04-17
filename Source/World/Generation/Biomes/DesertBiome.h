@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Biome.h"
+#include "Biome.h"
 #include <random>
 
 class DesertBiome : public Biome {
