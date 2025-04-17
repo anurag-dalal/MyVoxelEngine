@@ -37,6 +37,22 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(0, 9);  // Water
         } else if (blockId == 8u) {
             baseCoord = vec2(2, 1);  // Sand
+        } else if (blockId == 9u) {
+            baseCoord = vec2(2, 3);  // Snow top
+        } else if (blockId == 10u) {
+            baseCoord = vec2(1, 1);  // Gravel top
+        } else if (blockId == 11u) {
+            baseCoord = vec2(3, 4);  // Ice top
+        } else if (blockId == 12u) {
+            baseCoord = vec2(2, 2);  // Alpine Grass top
+        } else if (blockId == 13u) {
+            baseCoord = vec2(1, 9);  // Alpine Lake top
+        } else if (blockId == 14u) {
+            baseCoord = vec2(3, 1);  // Clay top
+        } else if (blockId == 15u) {
+            baseCoord = vec2(0, 1);  // Cobblestone top
+        } else if (blockId == 16u) {
+            baseCoord = vec2(2, 3);  // Snowy Dirt top
         }
     }
     else if (normal.y < -0.5) {   // Bottom face
@@ -56,6 +72,22 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(0, 9);  // Water
         } else if (blockId == 8u) {
             baseCoord = vec2(2, 1);  // Sand
+        } else if (blockId == 9u) {
+            baseCoord = vec2(2, 0);  // Snow bottom (dirt)
+        } else if (blockId == 10u) {
+            baseCoord = vec2(1, 1);  // Gravel bottom
+        } else if (blockId == 11u) {
+            baseCoord = vec2(3, 4);  // Ice bottom
+        } else if (blockId == 12u) {
+            baseCoord = vec2(2, 0);  // Alpine Grass bottom (dirt)
+        } else if (blockId == 13u) {
+            baseCoord = vec2(1, 9);  // Alpine Lake bottom
+        } else if (blockId == 14u) {
+            baseCoord = vec2(3, 1);  // Clay bottom
+        } else if (blockId == 15u) {
+            baseCoord = vec2(0, 1);  // Cobblestone bottom
+        } else if (blockId == 16u) {
+            baseCoord = vec2(2, 0);  // Snowy Dirt bottom (dirt)
         }
     }
     else {                        // Side faces
@@ -75,6 +107,22 @@ vec2 getBlockTexCoords(uint blockId, vec3 normal) {
             baseCoord = vec2(0, 9);  // Water
         } else if (blockId == 8u) {
             baseCoord = vec2(2, 1);  // Sand
+        } else if (blockId == 9u) {
+            baseCoord = vec2(2, 3);  // Snow side
+        } else if (blockId == 10u) {
+            baseCoord = vec2(1, 1);  // Gravel side
+        } else if (blockId == 11u) {
+            baseCoord = vec2(3, 4);  // Ice side
+        } else if (blockId == 12u) {
+            baseCoord = vec2(3, 2);  // Alpine Grass side
+        } else if (blockId == 13u) {
+            baseCoord = vec2(1, 9);  // Alpine Lake side
+        } else if (blockId == 14u) {
+            baseCoord = vec2(3, 1);  // Clay side
+        } else if (blockId == 15u) {
+            baseCoord = vec2(0, 1);  // Cobblestone side
+        } else if (blockId == 16u) {
+            baseCoord = vec2(3, 0);  // Snowy Dirt side (grass side)
         }
     }
     
