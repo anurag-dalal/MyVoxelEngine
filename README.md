@@ -8,9 +8,7 @@ A voxel rendering engine built with C++ and OpenGL, featuring procedurally gener
 
 ## 🎬 Demo
 
-https://github.com/user-attachments/assets/MyVoxelEngine.mp4
-
-[Download Video](MyVoxelEngine.mp4)
+![Demo](MyVoxelEngine.gif)
 
 ## ✨ Features
 
